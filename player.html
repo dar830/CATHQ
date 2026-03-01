@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CATHQ Player</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f0f1a 0%, #0a0a14 50%, #05050d 100%);
+      min-height: 100vh;
+      color: #f1f1f1;
+    }
+    .nav-blur {
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .detail-card {
+      background: rgba(20,20,30,0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+    }
+    .player-container {
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+    }
+    #errorMsg {
+      background: rgba(239,68,68,0.2);
+      border: 1px solid #ef4444;
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <nav class="nav-blur fixed w-full top-0 z-50 py-4">
+    <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+      <a href="index.html" class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">CATHQ</a>
+      <a href="index.html" class="text-lg font-medium hover:text-red-400 transition-colors">← Back to Home</a>
+    </div>
+  </nav>
+
+  <div id="content" class="max-w-7xl mx-auto px-6 pt-32 pb-20">
+    <div id="loading" class="text-center text-3xl font-bold text-gray-300 animate-pulse">Loading content...</div>
+
+    <div id="detail" class="hidden detail-card p-8 md:p-12">
+      <div class="flex flex-col md:flex-row gap-10">
+        <div class="md:w-1/3 flex-shrink-0">
+          <img id="poster" class="w-full rounded-xl shadow-2xl object-cover aspect-[2/3]" alt="Poster">
+        </div>
+        <div class="flex-1">
+          <h1 id="title" class="text-4xl md:text-5xl font-black mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"></h1>
+          <p id="overview" class="text-lg md:text-xl text-gray-300 leading-relaxed"></p>
+        </div>
+      </div>
+
+      <div id="tvSelectors" class="hidden mt-12">
+        <h2 class="text-3xl font-bold mb-6 bg-gradient-to-r from-red-500 to-pink-600 bg-clip-text text-transparent">Choose Episode</h2>
+        <div class="flex flex-wrap gap-8">
+          <div class="min-w-[180px]">
+            <label class="block mb-3 text-lg font-medium">Season</label>
+            <select id="seasonSelect" class="w-full bg-gray-900/80 border border-gray-700 text-white px-5 py-4 rounded-lg focus:outline-none focus:border-red-600 transition-all text-lg">
+            </select>
+          </div>
+          <div class="min-w-[220px]">
+            <label class="block mb-3 text-lg font-medium">Episode</label>
+            <select id="episodeSelect" class="w-full bg-gray-900/80 border border-gray-700 text-white px-5 py-4 rounded-lg focus:outline-none focus:border-red-600 transition-all text-lg">
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-12 player-container rounded-2xl overflow-hidden border border-gray-800/50">
+        <div class="relative pt-[56.25%] bg-black">
+          <iframe id="playerFrame" class="absolute inset-0 w-full h-full" frameborder="0" allowfullscreen allow="encrypted-media" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div id="errorMsg" class="hidden mt-6 text-center text-red-400 text-xl"></div>
+    </div>
+  </div>
+
+  <script>
+    const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
+    const headers = { 'Authorization': `Bearer ${TMDB_TOKEN}`, 'accept': 'application/json' };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+    const id = urlParams.get('id');
+
+    if (!type || !id) {
+      document.getElementById('loading').innerHTML = '<p class="text-red-500 text-2xl font-bold">Invalid link. Go back to home.</p>';
+    } else {
+      async function fetchTMDB(endpoint) {
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3${endpoint}`, { headers });
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`TMDB error ${res.status}: ${errorText}`);
+          }
+          return res.json();
+        } catch (err) {
+          console.error(err);
+          throw err;
+        }
+      }
+
+      async function loadDetail() {
+        try {
+          const data = await fetchTMDB(`/${type}/${id}?append_to_response=season/1`);
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('detail').classList.remove('hidden');
+
+          document.getElementById('title').textContent = data.title || data.name || 'Untitled';
+          document.getElementById('overview').textContent = data.overview || 'No overview available.';
+          document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || data.backdrop_path || '');
+
+          // Save for history
+          const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
+          const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
+          localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+            ...existing,
+            title: data.title || data.name || 'Untitled',
+            poster_path: data.poster_path || data.backdrop_path || ''
+          }));
+
+          loadPlayer(type === 'movie' ? null : 1, type === 'movie' ? null : 1);
+
+          if (type === 'tv') {
+            document.getElementById('tvSelectors').classList.remove('hidden');
+            const seasonSelect = document.getElementById('seasonSelect');
+            seasonSelect.innerHTML = '';
+            (data.seasons || []).forEach(s => {
+              if (s.season_number === 0) return;
+              const opt = document.createElement('option');
+              opt.value = s.season_number;
+              opt.textContent = `Season ${s.season_number} (${s.episode_count || '?'} eps)`;
+              seasonSelect.appendChild(opt);
+            });
+
+            seasonSelect.addEventListener('change', async (e) => {
+              const seasonNum = e.target.value;
+              try {
+                const eps = await fetchTMDB(`/tv/${id}/season/${seasonNum}`);
+                const epSelect = document.getElementById('episodeSelect');
+                epSelect.innerHTML = '';
+                (eps.episodes || []).forEach(ep => {
+                  const opt = document.createElement('option');
+                  opt.value = ep.episode_number;
+                  opt.textContent = `E${ep.episode_number} - ${ep.name || 'Episode ' + ep.episode_number}`;
+                  epSelect.appendChild(opt);
+                });
+                loadPlayer(seasonNum, epSelect.value || 1);
+              } catch (err) {
+                console.error('Season load error:', err);
+              }
+            });
+
+            document.getElementById('episodeSelect').addEventListener('change', (e) => {
+              loadPlayer(seasonSelect.value, e.target.value);
+            });
+
+            if (seasonSelect.options.length > 0) {
+              seasonSelect.dispatchEvent(new Event('change'));
+            }
+          }
+        } catch (err) {
+          document.getElementById('loading').innerHTML = `<p class="text-red-500 text-2xl font-bold">Error loading details: ${err.message}</p>`;
+          console.error('Detail load error:', err);
+        }
+      }
+
+      function loadPlayer(season, episode) {
+        let src = '';
+        const base = 'https://vidsrc-embed.ru/embed';
+
+        if (type === 'movie') {
+          src = `${base}/movie?tmdb=${id}&autoplay=1`;
+        } else {
+          src = `${base}/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`;
+        }
+
+        const iframe = document.getElementById('playerFrame');
+        iframe.src = src;
+
+        // Show error if iframe fails after 10s
+        setTimeout(() => {
+          if (iframe.contentDocument && iframe.contentDocument.body.innerHTML === '') {
+            document.getElementById('errorMsg').innerHTML = 'Player failed to load. Try disabling ad-blocker or use Brave browser.';
+            document.getElementById('errorMsg').classList.remove('hidden');
+          }
+        }, 10000);
+      }
+
+      // Progress saving & resume (unchanged)
+      const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
+      let currentSeason = 1;
+      let currentEpisode = 1;
+
+      function saveProgress(time, duration) {
+        if (time < 10 || duration < 60) return;
+        const progress = {
+          time: Math.floor(time),
+          duration: Math.floor(duration),
+          lastWatched: Date.now(),
+          season: currentSeason,
+          episode: currentEpisode
+        };
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+      }
+
+      function loadSavedProgress() {
+        const saved = localStorage.getItem(PROGRESS_KEY);
+        if (!saved) return null;
+        return JSON.parse(saved);
+      }
+
+      window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'PLAYER_EVENT') {
+          const { event: ev, currentTime, duration } = event.data.data || {};
+          if (ev === 'timeupdate' && currentTime && duration) {
+            saveProgress(currentTime, duration);
+          }
+        }
+      });
+
+      const saved = loadSavedProgress();
+      if (saved) {
+        if (type === 'movie' || (type === 'tv' && saved.season === currentSeason && saved.episode === currentEpisode)) {
+          setTimeout(() => {
+            const iframe = document.getElementById('playerFrame');
+            if (iframe && iframe.contentWindow) {
+              iframe.contentWindow.postMessage({ command: 'seek', time: saved.time }, '*');
+            }
+          }, 6000);
+        }
+      }
+
+      loadDetail();
+    }
+  </script>
+</body>
+</html>

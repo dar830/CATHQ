@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CATHQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at 10% 20%, #0a0015 0%, #000000 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: #f8fafc;
+    }
+    .glass {
+      background: rgba(15, 15, 30, 0.45);
+      backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .card {
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      background: rgba(20,20,40,0.4);
+      backdrop-filter: blur(8px);
+    }
+    .card:hover {
+      transform: translateY(-12px) scale(1.04);
+      box-shadow: 0 30px 60px -15px rgba(236,72,153,0.25),
+                  0 0 40px rgba(236,72,153,0.15);
+    }
+    .nav-glass {
+      background: rgba(5,5,15,0.75);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(236,72,153,0.15);
+      z-index: 1000;
+    }
+    .dropdown-menu {
+      z-index: 2000 !important;
+      min-width: 220px;
+    }
+    .heart {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 2rem;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      opacity: 0.7;
+    }
+    .heart.favorited {
+      color: #ec4899;
+      opacity: 1;
+      transform: scale(1.25);
+    }
+    .heart.pop {
+      animation: pop 0.4s ease-out;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.6); }
+      100% { transform: scale(1.25); }
+    }
+    h1, h2 {
+      background: linear-gradient(90deg, #c084fc, #ec4899, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Navigation -->
+  <nav class="nav-glass fixed w-full top-0 z-[1000] py-5">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <h1 class="text-4xl font-black tracking-tight">CATHQ</h1>
+
+      <div class="hidden md:flex items-center space-x-12 text-lg font-medium">
+        <button onclick="showSection('home')" class="hover:text-pink-300 transition">Home</button>
+        <button onclick="showSection('movies')" class="hover:text-pink-300 transition">Movies</button>
+        <button onclick="showSection('tv')" class="hover:text-pink-300 transition">TV Shows</button>
+      </div>
+
+      <div class="relative">
+        <button id="menuBtn" class="text-3xl focus:outline-none hover:text-pink-300 transition">☰</button>
+        <div id="dropdownMenu" class="dropdown-menu hidden absolute right-0 mt-5 w-64 glass rounded-2xl shadow-2xl overflow-hidden z-[2000]">
+          <div class="py-4">
+            <button onclick="showSection('home'); toggleDropdown()" class="block w-full text-left px-8 py-4 hover:bg-gray-800/60 transition text-lg">Home</button>
+            <button onclick="showSection('movies'); toggleDropdown()" class="block w-full text-left px-8 py-4 hover:bg-gray-800/60 transition text-lg">Movies</button>
+            <button onclick="showSection('tv'); toggleDropdown()" class="block w-full text-left px-8 py-4 hover:bg-gray-800/60 transition text-lg">TV Shows</button>
+            <div class="border-t border-gray-700 mx-4 my-2"></div>
+            <button onclick="showSection('history'); toggleDropdown()" class="block w-full text-left px-8 py-4 hover:bg-gray-800/60 transition text-lg">History</button>
+            <button onclick="showSection('favorites'); toggleDropdown()" class="block w-full text-left px-8 py-4 hover:bg-gray-800/60 transition text-lg">Favorites</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative hidden md:block">
+        <input id="searchInput" type="text" placeholder="Search..." class="glass w-80 pl-5 pr-12 py-3 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/50">
+      </div>
+    </div>
+  </nav>
+
+  <!-- Home -->
+  <section id="homeSection" class="pt-40 pb-32 px-6">
+    <div class="text-center mb-20">
+      <h2 class="text-6xl md:text-8xl font-black mb-6 tracking-tight drop-shadow-2xl">
+        CATHQ
+      </h2>
+      <p class="text-2xl md:text-3xl text-gray-300 max-w-4xl mx-auto opacity-90">
+        Watch anything. Anywhere. For free.
+      </p>
+    </div>
+
+    <h3 class="text-4xl font-black mb-10 text-center">Popular Movies</h3>
+    <div id="homeMoviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8 mb-20"></div>
+
+    <h3 class="text-4xl font-black mb-10 text-center">Popular TV Shows</h3>
+    <div id="homeTvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8 mb-20"></div>
+
+    <h3 class="text-4xl font-black mb-10 text-center">Recently Added</h3>
+    <div id="recentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8"></div>
+  </section>
+
+  <!-- Movies -->
+  <section id="moviesSection" class="px-6 pb-32 hidden">
+    <h2 class="text-5xl font-black mb-12 text-center">Movies</h2>
+    <div id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8"></div>
+  </section>
+
+  <!-- TV Shows -->
+  <section id="tvSection" class="px-6 pb-32 hidden">
+    <h2 class="text-5xl font-black mb-12 text-center">TV Shows</h2>
+    <div id="tvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8"></div>
+  </section>
+
+  <!-- History -->
+  <section id="historySection" class="px-6 pb-32 hidden">
+    <h2 class="text-5xl font-black mb-12 text-center">Watch History</h2>
+    <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8"></div>
+    <p id="noHistory" class="text-center text-xl text-gray-400 hidden mt-20">No watch history yet.</p>
+  </section>
+
+  <!-- Favorites -->
+  <section id="favoritesSection" class="px-6 pb-32 hidden">
+    <h2 class="text-5xl font-black mb-12 text-center">Favorites</h2>
+    <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8"></div>
+    <p id="noFavorites" class="text-center text-xl text-gray-400 hidden mt-20">No favorites yet.</p>
+  </section>
+
+  <script>
+    // Section toggle
+    function showSection(id) {
+      document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById(id + 'Section').classList.remove('hidden');
+
+      if (id === 'history') loadHistory();
+      if (id === 'favorites') loadFavorites();
+    }
+
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      document.getElementById('dropdownMenu').classList.toggle('hidden');
+    });
+
+    function toggleDropdown() {
+      document.getElementById('dropdownMenu').classList.add('hidden');
+    }
+
+    showSection('home');
+
+    const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
+    const BASE_URL = 'https://api.themoviedb.org/3';
+    const IMG_URL = 'https://image.tmdb.org/t/p/w500';
+    const headers = { 'Authorization': `Bearer ${TMDB_TOKEN}`, 'accept': 'application/json' };
+
+    const homeMoviesGrid = document.getElementById('homeMoviesGrid');
+    const homeTvGrid = document.getElementById('homeTvGrid');
+    const recentGrid = document.getElementById('recentGrid');
+    const historyGrid = document.getElementById('historyGrid');
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    const noHistory = document.getElementById('noHistory');
+    const noFavorites = document.getElementById('noFavorites');
+
+    async function fetchTMDB(endpoint) {
+      const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
+      if (!res.ok) return { results: [] };
+      return res.json();
+    }
+
+    function createCard(item, mediaType = item.media_type || 'movie') {
+      const card = document.createElement('div');
+      card.className = 'card relative group';
+
+      const isFav = isFavorite(item.id, mediaType);
+      const heartClass = isFav ? 'favorited' : '';
+
+      card.innerHTML = `
+        <img src="${IMG_URL + (item.poster_path || '')}" alt="${item.title || item.name}" class="w-full aspect-[2/3] object-cover rounded-xl">
+        <div class="heart heart ${heartClass}" onclick="event.stopPropagation(); toggleFavorite(${item.id}, '${mediaType}', '${(item.title || item.name).replace(/'/g, "\\'")}', '${item.poster_path || ''}')">♥</div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 to-transparent rounded-b-xl">
+          <p class="text-lg font-semibold truncate">${item.title || item.name}</p>
+          <p class="text-sm text-gray-300 mt-1">${mediaType.toUpperCase()}</p>
+        </div>
+      `;
+
+      card.onclick = (e) => {
+        if (e.target.classList.contains('heart')) return;
+        window.location.href = `player.html?type=${mediaType}&id=${item.id}`;
+      };
+
+      return card;
+    }
+
+    async function loadHome() {
+      const movies = await fetchTMDB('/movie/popular?page=1');
+      homeMoviesGrid.innerHTML = '';
+      movies.results?.slice(0,12).forEach(m => {
+        if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
+      });
+
+      const tv = await fetchTMDB('/tv/popular?page=1');
+      homeTvGrid.innerHTML = '';
+      tv.results?.slice(0,12).forEach(show => {
+        if (show.poster_path) homeTvGrid.appendChild(createCard(show, 'tv'));
+      });
+
+      const recentMovies = await fetchTMDB('/movie/now_playing?page=1');
+      const recentTv = await fetchTMDB('/tv/on_the_air?page=1');
+      recentGrid.innerHTML = '';
+      [...(recentMovies.results || []), ...(recentTv.results || [])]
+        .slice(0,12)
+        .forEach(item => {
+          if (item.poster_path) recentGrid.appendChild(createCard(item, item.media_type || (item.title ? 'movie' : 'tv')));
+        });
+    }
+
+    function getFavorites() {
+      return JSON.parse(localStorage.getItem('cathq_favorites') || '[]');
+    }
+
+    function isFavorite(id, type) {
+      return getFavorites().some(f => f.id === id && f.type === type);
+    }
+
+    function toggleFavorite(id, type, title, poster_path) {
+      let favs = getFavorites();
+      const index = favs.findIndex(f => f.id === id && f.type === type);
+
+      const heart = event.target;
+      heart.classList.add('pop');
+      setTimeout(() => heart.classList.remove('pop'), 400);
+
+      if (index > -1) {
+        favs.splice(index, 1);
+        heart.classList.remove('favorited');
+      } else {
+        favs.push({ id, type, title, poster_path });
+        heart.classList.add('favorited');
+      }
+
+      localStorage.setItem('cathq_favorites', JSON.stringify(favs));
+
+      if (!document.getElementById('favoritesSection').classList.contains('hidden')) {
+        loadFavorites();
+      }
+    }
+
+    function loadFavorites() {
+      const grid = document.getElementById('favoritesGrid');
+      grid.innerHTML = '';
+      document.getElementById('noFavorites').classList.add('hidden');
+
+      const favs = getFavorites();
+      if (favs.length === 0) {
+        document.getElementById('noFavorites').classList.remove('hidden');
+        return;
+      }
+
+      favs.forEach(f => {
+        const card = createCard({ id: f.id, title: f.title, poster_path: f.poster_path, media_type: f.type }, f.type);
+        grid.appendChild(card);
+      });
+    }
+
+    function loadHistory() {
+      const grid = document.getElementById('historyGrid');
+      grid.innerHTML = '';
+      document.getElementById('noHistory').classList.add('hidden');
+
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('cathq_progress_'));
+      if (keys.length === 0) {
+        document.getElementById('noHistory').classList.remove('hidden');
+        return;
+      }
+
+      keys.forEach(key => {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          if (!data || !data.title) return;
+
+          const parts = key.split('_');
+          const type = parts[2];  // movie or tv
+          const id = parts[3];
+
+          const card = createCard({ id: Number(id), title: data.title, poster_path: data.poster_path || '', media_type: type }, type);
+
+          card.onclick = () => {
+            window.location.href = `player.html?type=${type}&id=${id}`;
+          };
+
+          grid.appendChild(card);
+        } catch (e) {
+          console.error('History error:', e);
+        }
+      });
+    }
+
+    loadHome();
+  </script>
+</body>
+</html>
