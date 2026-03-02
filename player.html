@@ -26,11 +26,25 @@
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+      position: relative;
     }
     iframe {
       width: 100%;
       height: 100%;
       border: none;
+    }
+    .error-msg {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff6b6b;
+      font-size: 1.25rem;
+      text-align: center;
+      padding: 2rem;
+      pointer-events: none;
     }
     h1, h2, p, span, div, label, select {
       color: #ffffff !important;
@@ -93,6 +107,10 @@
             sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
           ></iframe>
         </div>
+        <div id="playerError" class="error-msg hidden">
+          Player failed to load.<br>
+          Try a different movie/show or come back later — the stream may be down.
+        </div>
       </div>
     </div>
   </div>
@@ -116,7 +134,7 @@
 
       async function loadDetail() {
         try {
-          const data = await fetchTMDB(`/${type}/${id}?append_to_response=season/1`);
+          const data = await fetchTMDB(`/${type}/${id}?append_to_response=external_ids,season/1`);
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('detail').classList.remove('hidden');
 
@@ -124,7 +142,10 @@
           document.getElementById('overview').textContent = data.overview || 'No overview available.';
           document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || data.backdrop_path || '');
 
-          loadPlayer(type === 'movie' ? null : 1, type === 'movie' ? null : 1);
+          // Try to get IMDb ID for VidFast (prefers tt...)
+          const imdbId = data.external_ids?.imdb_id || id;
+
+          loadPlayer(type === 'movie' ? null : 1, type === 'movie' ? null : 1, imdbId);
 
           if (type === 'tv') {
             document.getElementById('tvSelectors').classList.remove('hidden');
@@ -149,11 +170,11 @@
                 opt.textContent = `E${ep.episode_number} - ${ep.name || 'Episode ' + ep.episode_number}`;
                 epSelect.appendChild(opt);
               });
-              loadPlayer(seasonNum, epSelect.value || 1);
+              loadPlayer(seasonNum, epSelect.value || 1, imdbId);
             });
 
             document.getElementById('episodeSelect').addEventListener('change', (e) => {
-              loadPlayer(seasonSelect.value, e.target.value);
+              loadPlayer(seasonSelect.value, e.target.value, imdbId);
             });
 
             if (seasonSelect.options.length > 0) {
@@ -165,16 +186,28 @@
         }
       }
 
-      function loadPlayer(season, episode) {
-        const base = 'https://vidfast.pro/embed';  // New working domain
+      function loadPlayer(season, episode, imdbId) {
+        const base = 'https://vidfast.pro/embed';
         let src = '';
+
         if (type === 'movie') {
-          src = `${base}/movie/${id}?autoPlay=true`;
+          src = `${base}/movie/${imdbId || id}?autoPlay=true`;
         } else {
-          src = `${base}/tv/${id}/${season}/${episode}?autoPlay=true&autoNext=true`;
+          src = `${base}/tv/${imdbId || id}/${season}/${episode}?autoPlay=true&autoNext=true`;
         }
 
-        document.getElementById('playerFrame').src = src;
+        const iframe = document.getElementById('playerFrame');
+        iframe.src = src;
+
+        // Show error if nothing loads after 12 seconds
+        setTimeout(() => {
+          if (iframe.contentDocument && iframe.contentDocument.body.innerHTML.trim() === '') {
+            document.getElementById('playerError') = document.createElement('div');
+            document.getElementById('playerError').className = 'error-msg';
+            document.getElementById('playerError').innerHTML = 'Video failed to load.<br>Try a different title or come back later.';
+            document.querySelector('.player-wrapper').appendChild(document.getElementById('playerError'));
+          }
+        }, 12000);
       }
 
       // Progress saving & resume
