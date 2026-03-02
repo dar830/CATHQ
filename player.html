@@ -1,138 +1,288 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CATHQ</title>
   <title>CATHQ Player</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      background: #000000;
-      color: #ffffff;
+      background: #0a0a0f;
+      color: #e5e7eb;
+      background: linear-gradient(135deg, #0f0f1a 0%, #0a0a14 50%, #05050d 100%);
       min-height: 100vh;
+      color: #f1f1f1;
     }
-    nav {
-      background: rgba(0,0,0,0.9);
+    .nav {
+      background: rgba(10,10,15,0.92);
+    .nav-blur {
+      background: rgba(0,0,0,0.7);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid #1f2937;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-    .detail-card {
-      background: #0f0f0f;
-      border: 1px solid #222;
-      border-radius: 12px;
-    }
-    .player-wrapper {
-      background: #000;
-      border-radius: 12px;
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 0.75rem;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-      position: relative;
+      transition: transform 0.2s ease;
+    .detail-card {
+      background: rgba(20,20,30,0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
     }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+    .card:hover {
+      transform: translateY(-6px);
+    .player-container {
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
     }
-    h1, h2, p, span, div, label, select, a {
-      color: #ffffff !important;
-    }
-    .cast-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
-    .cast-item {
-      background: #111;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      font-size: 0.95rem;
-    }
-    .error-overlay {
+    .heart {
       position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ff6b6b;
-      font-size: 1.25rem;
-      text-align: center;
-      padding: 2rem;
+      top: 10px;
+      right: 10px;
+      font-size: 1.75rem;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+      opacity: 0.6;
+    }
+    .heart.favorited {
+      color: #f472b6;
+      opacity: 1;
+    }
+    .heart.pop {
+      animation: pop 0.3s ease-out;
+    }
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.4); }
+      100% { transform: scale(1.2); }
+    }
+    .modal-bg {
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
+    #errorMsg {
+      background: rgba(239,68,68,0.2);
+      border: 1px solid #ef4444;
+      border-radius: 1rem;
+      padding: 1.5rem;
     }
   </style>
 </head>
+<body>
 <body class="min-h-screen">
 
-  <nav class="fixed w-full top-0 z-50 py-4">
+  <!-- Navigation -->
+  <nav class="nav fixed w-full top-0 z-50 py-4">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <h1 class="text-3xl font-bold text-white">CATHQ</h1>
+  <nav class="nav-blur fixed w-full top-0 z-50 py-4">
     <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-      <a href="index.html" class="text-3xl md:text-4xl font-bold text-white">CATHQ</a>
-      <a href="index.html" class="text-lg text-gray-300 hover:text-white transition">← Back</a>
+      <a href="index.html" class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">CATHQ</a>
+      <a href="index.html" class="text-lg font-medium hover:text-red-400 transition-colors">← Back to Home</a>
     </div>
   </nav>
 
-  <div class="pt-24 px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
-    <div id="loading" class="text-center text-3xl font-bold text-white animate-pulse py-20">
-      Loading...
-    </div>
+  <div id="content" class="max-w-7xl mx-auto px-6 pt-32 pb-20">
+    <div id="loading" class="text-center text-3xl font-bold text-gray-300 animate-pulse">Loading content...</div>
 
-    <div id="detail" class="hidden detail-card p-6 md:p-10">
-      <div class="flex flex-col md:flex-row gap-8 mb-10">
-        <div class="md:w-1/3 lg:w-1/4">
-          <img id="poster" class="w-full rounded-lg shadow-2xl object-cover" alt="Poster">
+      <div class="hidden md:flex items-center space-x-10 text-base">
+        <button onclick="showSection('home')" class="hover:text-gray-300">Home</button>
+        <button onclick="showSection('movies')" class="hover:text-gray-300">Movies</button>
+        <button onclick="showSection('tv')" class="hover:text-gray-300">TV Shows</button>
+    <div id="detail" class="hidden detail-card p-8 md:p-12">
+      <div class="flex flex-col md:flex-row gap-10">
+        <div class="md:w-1/3 flex-shrink-0">
+          <img id="poster" class="w-full rounded-xl shadow-2xl object-cover aspect-[2/3]" alt="Poster">
         </div>
         <div class="flex-1">
-          <h1 id="title" class="text-3xl md:text-4xl font-bold mb-4 text-white"></h1>
-          <p id="overview" class="text-gray-200 leading-relaxed"></p>
+          <h1 id="title" class="text-4xl md:text-5xl font-black mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"></h1>
+          <p id="overview" class="text-lg md:text-xl text-gray-300 leading-relaxed"></p>
+        </div>
+      </div>
 
-          <!-- Cast section -->
-          <div class="mt-8">
-            <h3 class="text-xl font-semibold mb-4 text-white">Cast</h3>
-            <div id="castList" class="cast-list"></div>
+      <div class="relative">
+        <button id="menuBtn" class="text-2xl text-gray-300 focus:outline-none hover:text-white">☰</button>
+        <div id="dropdownMenu" class="hidden absolute right-0 mt-3 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-[2000]">
+          <div class="py-2">
+            <button onclick="showSection('home'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">Home</button>
+            <button onclick="showSection('movies'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">Movies</button>
+            <button onclick="showSection('tv'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">TV Shows</button>
+            <hr class="border-gray-700 my-1">
+            <button onclick="showSection('history'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">History</button>
+            <button onclick="showSection('favorites'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">Favorites</button>
+      <div id="tvSelectors" class="hidden mt-12">
+        <h2 class="text-3xl font-bold mb-6 bg-gradient-to-r from-red-500 to-pink-600 bg-clip-text text-transparent">Choose Episode</h2>
+        <div class="flex flex-wrap gap-8">
+          <div class="min-w-[180px]">
+            <label class="block mb-3 text-lg font-medium">Season</label>
+            <select id="seasonSelect" class="w-full bg-gray-900/80 border border-gray-700 text-white px-5 py-4 rounded-lg focus:outline-none focus:border-red-600 transition-all text-lg">
+            </select>
+          </div>
+          <div class="min-w-[220px]">
+            <label class="block mb-3 text-lg font-medium">Episode</label>
+            <select id="episodeSelect" class="w-full bg-gray-900/80 border border-gray-700 text-white px-5 py-4 rounded-lg focus:outline-none focus:border-red-600 transition-all text-lg">
+            </select>
           </div>
         </div>
       </div>
 
-      <div id="tvSelectors" class="hidden mt-8">
-        <h2 class="text-2xl font-semibold mb-6 text-white">Select Episode</h2>
-        <div class="flex flex-wrap gap-6">
-          <div class="min-w-[160px]">
-            <label class="block mb-2 text-white">Season</label>
-            <select id="seasonSelect" class="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-gray-500">
-            </select>
-          </div>
-          <div class="min-w-[200px]">
-            <label class="block mb-2 text-white">Episode</label>
-            <select id="episodeSelect" class="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-gray-500">
-            </select>
-          </div>
-        </div>
-      </div>
+      <input id="searchInput" type="text" placeholder="Search..." class="hidden md:block bg-gray-900 border border-gray-700 text-gray-200 px-4 py-2 rounded-full w-64 focus:outline-none focus:border-gray-500">
+    </div>
+  </nav>
 
-      <div class="mt-10 player-wrapper relative">
+  <!-- Home -->
+  <section id="homeSection" class="pt-28 pb-16 px-6">
+    <div class="text-center mb-16">
+      <h2 class="text-5xl md:text-6xl font-bold mb-4">CATHQ</h2>
+      <p class="text-xl text-gray-400">Watch movies & shows. No sign-up. No limits.</p>
+    </div>
+
+    <h3 class="text-2xl font-semibold mb-6 text-center">Popular Movies</h3>
+    <div id="homeMoviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-12"></div>
+
+    <h3 class="text-2xl font-semibold mb-6 text-center">Popular TV Shows</h3>
+    <div id="homeTvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-12"></div>
+
+    <h3 class="text-2xl font-semibold mb-6 text-center">Recently Added</h3>
+    <div id="recentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+  </section>
+
+  <!-- Movies -->
+  <section id="moviesSection" class="px-6 pb-16 hidden">
+    <h2 class="text-3xl font-bold mb-8 text-center">Movies</h2>
+    <div id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+  </section>
+
+  <!-- TV Shows -->
+  <section id="tvSection" class="px-6 pb-16 hidden">
+    <h2 class="text-3xl font-bold mb-8 text-center">TV Shows</h2>
+    <div id="tvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+  </section>
+
+  <!-- History -->
+  <section id="historySection" class="px-6 pb-16 hidden">
+    <h2 class="text-3xl font-bold mb-8 text-center">Watch History</h2>
+    <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+    <p id="noHistory" class="text-center text-gray-400 mt-12 hidden">No history yet.</p>
+  </section>
+
+  <!-- Favorites -->
+  <section id="favoritesSection" class="px-6 pb-16 hidden">
+    <h2 class="text-3xl font-bold mb-8 text-center">Favorites</h2>
+    <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+    <p id="noFavorites" class="text-center text-gray-400 mt-12 hidden">No favorites yet.</p>
+  </section>
+
+  <!-- Info Modal -->
+  <div id="infoModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] hidden">
+    <div class="relative w-full max-w-4xl mx-4 bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
+      <button onclick="closeModal()" class="absolute top-4 right-6 text-4xl text-gray-400 hover:text-white">×</button>
+
+      <div class="flex flex-col md:flex-row">
+        <div class="md:w-2/5">
+          <img id="modalPoster" class="w-full h-full object-cover" alt="Poster">
+        </div>
+        <div class="p-8 flex-1">
+          <h2 id="modalTitle" class="text-3xl font-bold mb-4 text-white"></h2>
+          <div class="flex flex-wrap gap-4 mb-6 text-sm">
+            <span id="modalRating" class="bg-yellow-600 text-black px-2 py-1 rounded font-semibold"></span>
+            <span id="modalYear" class="text-gray-400"></span>
+            <span id="modalRuntime" class="text-gray-400"></span>
+          </div>
+          <p id="modalOverview" class="text-gray-300 mb-6"></p>
+          <button id="playBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-4 rounded-lg transition">
+            ▶ Play
+          </button>
+      <div class="mt-12 player-container rounded-2xl overflow-hidden border border-gray-800/50">
         <div class="relative pt-[56.25%] bg-black">
-          <iframe 
-            id="playerFrame" 
-            class="absolute inset-0 w-full h-full" 
-            frameborder="0" 
-            allowfullscreen 
-            allow="encrypted-media"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
-          ></iframe>
-        </div>
-        <div id="playerError" class="error-overlay hidden">
-          Media cannot be played right now.<br>
-          The stream may be down or blocked by your ad-blocker.<br>
-          Try disabling ad-blocker, using Brave browser, or come back later.
+          <iframe id="playerFrame" class="absolute inset-0 w-full h-full" frameborder="0" allowfullscreen allow="encrypted-media" allowfullscreen></iframe>
         </div>
       </div>
+
+      <div id="errorMsg" class="hidden mt-6 text-center text-red-400 text-xl"></div>
     </div>
   </div>
 
   <script>
+    function showSection(id) {
+      document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
+      document.getElementById(id + 'Section').classList.remove('hidden');
+
+      if (id === 'history') loadHistory();
+      if (id === 'favorites') loadFavorites();
+    }
+
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      document.getElementById('dropdownMenu').classList.toggle('hidden');
+    });
+
+    function toggleDropdown() {
+      document.getElementById('dropdownMenu').classList.add('hidden');
+    }
+
+    showSection('home');
+
     const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
+    const BASE_URL = 'https://api.themoviedb.org/3';
+    const IMG_URL = 'https://image.tmdb.org/t/p/w500';
     const headers = { 'Authorization': `Bearer ${TMDB_TOKEN}`, 'accept': 'application/json' };
 
+    const homeMoviesGrid = document.getElementById('homeMoviesGrid');
+    const homeTvGrid = document.getElementById('homeTvGrid');
+    const recentGrid = document.getElementById('recentGrid');
+    const historyGrid = document.getElementById('historyGrid');
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    const noHistory = document.getElementById('noHistory');
+    const noFavorites = document.getElementById('noFavorites');
+
+    async function fetchTMDB(endpoint) {
+      const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
+      if (!res.ok) return { results: [] };
+      return res.json();
+    }
+
+    function createCard(item, mediaType = item.media_type || 'movie') {
+      const card = document.createElement('div');
+      card.className = 'card relative group cursor-pointer';
+
+      const isFav = isFavorite(item.id, mediaType);
+      const heartClass = isFav ? 'favorited' : '';
+
+      card.innerHTML = `
+        <img src="${IMG_URL + (item.poster_path || '')}" alt="${item.title || item.name}" class="w-full aspect-[2/3] object-cover">
+        <div class="heart heart ${heartClass}" onclick="event.stopPropagation(); toggleFavorite(${item.id}, '${mediaType}', '${(item.title || item.name).replace(/'/g, "\\'")}', '${item.poster_path || ''}')">♥</div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+          <p class="text-base font-medium truncate">${item.title || item.name}</p>
+          <p class="text-xs text-gray-400 mt-1">${mediaType.toUpperCase()}</p>
+        </div>
+      `;
+
+      card.onclick = () => openModal(item, mediaType);
+
+      return card;
+    }
+
+    const modal = document.getElementById('infoModal');
+
+    async function openModal(item, mediaType) {
+      try {
+        const full = await fetchTMDB(`/${mediaType}/${item.id}?append_to_response=credits`);
+        document.getElementById('modalTitle').textContent = full.title || full.name || 'Untitled';
+        document.getElementById('modalOverview').textContent = full.overview || 'No description.';
+        document.getElementById('modalPoster').src = 'https://image.tmdb.org/t/p/w780' + (full.poster_path || '');
+        document.getElementById('modalRating').textContent = full.vote_average ? full.vote_average.toFixed(1) : '—';
+        document.getElementById('modalYear').textContent = (full.release_date || full.first_air_date || '').slice(0,4) || '—';
+        document.getElementById('modalRuntime').textContent = full.runtime ? full.runtime + ' min' : (full.number_of_seasons ? full.number_of_seasons + ' Seasons' : '—');
+
+        document.getElementById('playBtn').onclick = () => {
+          window.location.href = `player.html?type=${mediaType}&id=${item.id}`;
+        };
+
+        modal.classList.remove('hidden');
+      } catch {
+        modal.classList.remove('hidden');
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type');
     const id = urlParams.get('id');
@@ -141,14 +291,53 @@
       document.getElementById('loading').innerHTML = '<p class="text-red-500 text-2xl font-bold">Invalid link. Go back to home.</p>';
     } else {
       async function fetchTMDB(endpoint) {
-        const res = await fetch(`https://api.themoviedb.org/3${endpoint}`, { headers });
-        if (!res.ok) throw new Error(`TMDB ${res.status}`);
-        return res.json();
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3${endpoint}`, { headers });
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`TMDB error ${res.status}: ${errorText}`);
+          }
+          return res.json();
+        } catch (err) {
+          console.error(err);
+          throw err;
+        }
       }
+    }
 
+    function closeModal() {
+      modal.classList.add('hidden');
+    }
+
+    modal.onclick = e => {
+      if (e.target === modal) closeModal();
+    };
+
+    function getFavorites() {
+      return JSON.parse(localStorage.getItem('cathq_favorites') || '[]');
+    }
+
+    function isFavorite(id, type) {
+      return getFavorites().some(f => f.id === id && f.type === type);
+    }
+
+    function toggleFavorite(id, type, title, poster_path) {
+      let favs = getFavorites();
+      const idx = favs.findIndex(f => f.id === id && f.type === type);
+      const heart = event.target;
+
+      heart.classList.add('pop');
+      setTimeout(() => heart.classList.remove('pop'), 400);
+
+      if (idx > -1) {
+        favs.splice(idx, 1);
+        heart.classList.remove('favorited');
+      } else {
+        favs.push({ id, type, title, poster_path });
+        heart.classList.add('favorited');
       async function loadDetail() {
         try {
-          const data = await fetchTMDB(`/${type}/${id}?append_to_response=credits,season/1`);
+          const data = await fetchTMDB(`/${type}/${id}?append_to_response=season/1`);
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('detail').classList.remove('hidden');
 
@@ -156,19 +345,14 @@
           document.getElementById('overview').textContent = data.overview || 'No overview available.';
           document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || data.backdrop_path || '');
 
-          // Cast / Actors
-          const castList = document.getElementById('castList');
-          castList.innerHTML = '';
-          if (data.credits?.cast?.length) {
-            data.credits.cast.slice(0, 6).forEach(actor => {
-              const div = document.createElement('div');
-              div.className = 'cast-item';
-              div.textContent = actor.name;
-              castList.appendChild(div);
-            });
-          } else {
-            castList.innerHTML = '<p class="text-gray-400">Cast info not available</p>';
-          }
+          // Save for history
+          const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
+          const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
+          localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+            ...existing,
+            title: data.title || data.name || 'Untitled',
+            poster_path: data.poster_path || data.backdrop_path || ''
+          }));
 
           loadPlayer(type === 'movie' ? null : 1, type === 'movie' ? null : 1);
 
@@ -186,16 +370,20 @@
 
             seasonSelect.addEventListener('change', async (e) => {
               const seasonNum = e.target.value;
-              const eps = await fetchTMDB(`/tv/${id}/season/${seasonNum}`);
-              const epSelect = document.getElementById('episodeSelect');
-              epSelect.innerHTML = '';
-              (eps.episodes || []).forEach(ep => {
-                const opt = document.createElement('option');
-                opt.value = ep.episode_number;
-                opt.textContent = `E${ep.episode_number} - ${ep.name || 'Episode ' + ep.episode_number}`;
-                epSelect.appendChild(opt);
-              });
-              loadPlayer(seasonNum, epSelect.value || 1);
+              try {
+                const eps = await fetchTMDB(`/tv/${id}/season/${seasonNum}`);
+                const epSelect = document.getElementById('episodeSelect');
+                epSelect.innerHTML = '';
+                (eps.episodes || []).forEach(ep => {
+                  const opt = document.createElement('option');
+                  opt.value = ep.episode_number;
+                  opt.textContent = `E${ep.episode_number} - ${ep.name || 'Episode ' + ep.episode_number}`;
+                  epSelect.appendChild(opt);
+                });
+                loadPlayer(seasonNum, epSelect.value || 1);
+              } catch (err) {
+                console.error('Season load error:', err);
+              }
             });
 
             document.getElementById('episodeSelect').addEventListener('change', (e) => {
@@ -207,31 +395,60 @@
             }
           }
         } catch (err) {
-          document.getElementById('loading').innerHTML = `<p class="text-red-500 text-2xl font-bold">Error loading: ${err.message}</p>`;
+          document.getElementById('loading').innerHTML = `<p class="text-red-500 text-2xl font-bold">Error loading details: ${err.message}</p>`;
+          console.error('Detail load error:', err);
         }
       }
 
+      localStorage.setItem('cathq_favorites', JSON.stringify(favs));
+
+      if (!document.getElementById('favoritesSection').classList.contains('hidden')) loadFavorites();
+    }
+
+    function loadFavorites() {
+      const grid = document.getElementById('favoritesGrid');
+      grid.innerHTML = '';
+      document.getElementById('noFavorites').classList.add('hidden');
+
+      const favs = getFavorites();
+      if (favs.length === 0) {
+        document.getElementById('noFavorites').classList.remove('hidden');
+        return;
       function loadPlayer(season, episode) {
-        const base = 'https://vidsrc-embed.su/embed';  // Current live domain
         let src = '';
+        const base = 'https://vidsrc-embed.ru/embed';
+
         if (type === 'movie') {
-          src = `${base}/movie?tmdb=${id}&autoplay=1`;  // No color param
+          src = `${base}/movie?tmdb=${id}&autoplay=1`;
         } else {
-          src = `${base}/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`;  // No color
+          src = `${base}/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`;
         }
 
         const iframe = document.getElementById('playerFrame');
         iframe.src = src;
 
-        // Show error if nothing loads after 10 seconds
+        // Show error if iframe fails after 10s
         setTimeout(() => {
-          if (iframe.contentDocument && iframe.contentDocument.body.innerHTML.trim() === '') {
-            document.getElementById('playerError').classList.remove('hidden');
+          if (iframe.contentDocument && iframe.contentDocument.body.innerHTML === '') {
+            document.getElementById('errorMsg').innerHTML = 'Player failed to load. Try disabling ad-blocker or use Brave browser.';
+            document.getElementById('errorMsg').classList.remove('hidden');
           }
         }, 10000);
       }
 
-      // Progress saving & resume
+      favs.forEach(f => grid.appendChild(createCard({id:f.id, title:f.title, poster_path:f.poster_path}, f.type)));
+    }
+
+    function loadHistory() {
+      const grid = document.getElementById('historyGrid');
+      grid.innerHTML = '';
+      document.getElementById('noHistory').classList.add('hidden');
+
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('cathq_progress_'));
+      if (keys.length === 0) {
+        document.getElementById('noHistory').classList.remove('hidden');
+        return;
+      // Progress saving & resume (unchanged)
       const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
       let currentSeason = 1;
       let currentEpisode = 1;
@@ -248,12 +465,27 @@
         localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
       }
 
+      keys.forEach(key => {
+        const data = JSON.parse(localStorage.getItem(key) || '{}');
+        if (!data.title) return;
+
+        const [, , type, id] = key.split('_');
+        const card = createCard({id: Number(id), title: data.title, poster_path: data.poster_path || '', media_type: type}, type);
+        card.onclick = () => window.location.href = `player.html?type=${type}&id=${id}`;
+        grid.appendChild(card);
+      });
+    }
       function loadSavedProgress() {
         const saved = localStorage.getItem(PROGRESS_KEY);
         if (!saved) return null;
         return JSON.parse(saved);
       }
 
+    async function loadHome() {
+      const movies = await fetchTMDB('/movie/popular?page=1');
+      homeMoviesGrid.innerHTML = '';
+      movies.results?.slice(0,12).forEach(m => {
+        if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
       window.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'PLAYER_EVENT') {
           const { event: ev, currentTime, duration } = event.data.data || {};
@@ -263,6 +495,11 @@
         }
       });
 
+      const tv = await fetchTMDB('/tv/popular?page=1');
+      homeTvGrid.innerHTML = '';
+      tv.results?.slice(0,12).forEach(s => {
+        if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
+      });
       const saved = loadSavedProgress();
       if (saved) {
         if (type === 'movie' || (type === 'tv' && saved.season === currentSeason && saved.episode === currentEpisode)) {
@@ -275,8 +512,18 @@
         }
       }
 
+      const recentM = await fetchTMDB('/movie/now_playing?page=1');
+      const recentT = await fetchTMDB('/tv/on_the_air?page=1');
+      recentGrid.innerHTML = '';
+      [...(recentM.results||[]), ...(recentT.results||[])]
+        .slice(0,12)
+        .forEach(item => {
+          if (item.poster_path) recentGrid.appendChild(createCard(item, item.media_type || (item.title ? 'movie' : 'tv')));
+        });
       loadDetail();
     }
+
+    loadHome();
   </script>
 </body>
 </html>
