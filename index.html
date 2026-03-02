@@ -154,6 +154,7 @@
   </div>
 
   <script>
+    // Section toggle
     function showSection(id) {
       document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
       document.getElementById(id + 'Section').classList.remove('hidden');
@@ -180,15 +181,25 @@
     const homeMoviesGrid = document.getElementById('homeMoviesGrid');
     const homeTvGrid = document.getElementById('homeTvGrid');
     const recentGrid = document.getElementById('recentGrid');
+    const moviesGrid = document.getElementById('moviesGrid');
+    const tvGrid = document.getElementById('tvGrid');
     const historyGrid = document.getElementById('historyGrid');
     const favoritesGrid = document.getElementById('favoritesGrid');
     const noHistory = document.getElementById('noHistory');
     const noFavorites = document.getElementById('noFavorites');
 
     async function fetchTMDB(endpoint) {
-      const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
-      if (!res.ok) return { results: [] };
-      return res.json();
+      try {
+        const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
+        if (!res.ok) {
+          console.error(`TMDB fetch failed: ${endpoint} - ${res.status}`);
+          return { results: [] };
+        }
+        return res.json();
+      } catch (err) {
+        console.error('TMDB error:', err);
+        return { results: [] };
+      }
     }
 
     function createCard(item, mediaType = item.media_type || 'movie') {
@@ -224,12 +235,16 @@
         document.getElementById('modalYear').textContent = (full.release_date || full.first_air_date || '').slice(0,4) || '—';
         document.getElementById('modalRuntime').textContent = full.runtime ? full.runtime + ' min' : (full.number_of_seasons ? full.number_of_seasons + ' Seasons' : '—');
 
+        // FIXED Play button
         document.getElementById('playBtn').onclick = () => {
-          window.location.href = `player.html?type=${mediaType}&id=${item.id}`;
+          const playerUrl = `player.html?type=${mediaType}&id=${item.id}`;
+          console.log('Navigating to:', playerUrl); // Debug log - check F12 Console
+          window.location.href = playerUrl;
         };
 
         modal.classList.remove('hidden');
-      } catch {
+      } catch (err) {
+        console.error('Modal error:', err);
         modal.classList.remove('hidden');
       }
     }
@@ -308,26 +323,55 @@
     }
 
     async function loadHome() {
-      const movies = await fetchTMDB('/movie/popular?page=1');
-      homeMoviesGrid.innerHTML = '';
-      movies.results?.slice(0,12).forEach(m => {
-        if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
-      });
-
-      const tv = await fetchTMDB('/tv/popular?page=1');
-      homeTvGrid.innerHTML = '';
-      tv.results?.slice(0,12).forEach(s => {
-        if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
-      });
-
-      const recentM = await fetchTMDB('/movie/now_playing?page=1');
-      const recentT = await fetchTMDB('/tv/on_the_air?page=1');
-      recentGrid.innerHTML = '';
-      [...(recentM.results||[]), ...(recentT.results||[])]
-        .slice(0,12)
-        .forEach(item => {
-          if (item.poster_path) recentGrid.appendChild(createCard(item, item.media_type || (item.title ? 'movie' : 'tv')));
+      try {
+        const movies = await fetchTMDB('/movie/popular?page=1');
+        homeMoviesGrid.innerHTML = '';
+        movies.results?.slice(0,12).forEach(m => {
+          if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
         });
+
+        const tv = await fetchTMDB('/tv/popular?page=1');
+        homeTvGrid.innerHTML = '';
+        tv.results?.slice(0,12).forEach(s => {
+          if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
+        });
+
+        const recentM = await fetchTMDB('/movie/now_playing?page=1');
+        const recentT = await fetchTMDB('/tv/on_the_air?page=1');
+        recentGrid.innerHTML = '';
+        [...(recentM.results||[]), ...(recentT.results||[])]
+          .slice(0,12)
+          .forEach(item => {
+            if (item.poster_path) recentGrid.appendChild(createCard(item, item.media_type || (item.title ? 'movie' : 'tv')));
+          });
+      } catch (err) {
+        console.error('Home load error:', err);
+      }
+    }
+
+    // Load movies/TV sections on demand
+    async function loadMovies() {
+      try {
+        const movies = await fetchTMDB('/movie/popular?page=1');
+        moviesGrid.innerHTML = '';
+        movies.results?.slice(0,18).forEach(m => {
+          if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
+        });
+      } catch (err) {
+        console.error('Movies load error:', err);
+      }
+    }
+
+    async function loadTV() {
+      try {
+        const tv = await fetchTMDB('/tv/popular?page=1');
+        tvGrid.innerHTML = '';
+        tv.results?.slice(0,18).forEach(s => {
+          if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
+        });
+      } catch (err) {
+        console.error('TV load error:', err);
+      }
     }
 
     loadHome();
