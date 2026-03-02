@@ -166,10 +166,13 @@
       }
 
       function loadPlayer(season, episode) {
-        const base = 'https://vsembed.su/embed';  // Updated to new domain
-        let src = type === 'movie' 
-          ? `${base}/movie?tmdb=${id}&autoplay=1`
-          : `${base}/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`;
+        const base = 'https://vidfast.pro/embed';  // New working domain
+        let src = '';
+        if (type === 'movie') {
+          src = `${base}/movie/${id}?autoPlay=true`;
+        } else {
+          src = `${base}/tv/${id}/${season}/${episode}?autoPlay=true&autoNext=true`;
+        }
 
         document.getElementById('playerFrame').src = src;
       }
