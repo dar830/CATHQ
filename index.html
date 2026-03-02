@@ -68,6 +68,9 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    #infoModal {
+      z-index: 9999;
+    }
   </style>
 </head>
 <body class="antialiased">
@@ -150,8 +153,51 @@
     <p id="noFavorites" class="text-center text-xl text-gray-400 hidden mt-20">No favorites yet.</p>
   </section>
 
+  <!-- Info Modal -->
+  <div id="infoModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] hidden overflow-y-auto">
+    <div class="relative w-full max-w-5xl mx-4 my-8 bg-gray-900/95 backdrop-blur-xl rounded-2xl overflow-hidden shadow-2xl border border-gray-700/50">
+      <!-- Close button -->
+      <button onclick="closeModal()" class="absolute top-4 right-6 text-5xl text-white hover:text-red-400 transition z-10">×</button>
+
+      <div class="flex flex-col md:flex-row">
+        <!-- Left: Poster / Backdrop -->
+        <div class="md:w-2/5 relative">
+          <img id="modalPoster" class="w-full h-full object-cover" alt="Poster">
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+        </div>
+
+        <!-- Right: Info -->
+        <div class="p-8 md:p-12 flex-1">
+          <h2 id="modalTitle" class="text-4xl md:text-5xl font-black mb-4"></h2>
+
+          <div class="flex flex-wrap items-center gap-4 mb-6 text-sm md:text-base">
+            <span id="modalRating" class="bg-yellow-500 text-black px-3 py-1 rounded font-bold"></span>
+            <span id="modalYear" class="text-gray-300"></span>
+            <span id="modalRuntime" class="text-gray-300"></span>
+            <span id="modalGenres" class="text-gray-300"></span>
+          </div>
+
+          <p id="modalOverview" class="text-lg text-gray-300 mb-8 leading-relaxed"></p>
+
+          <!-- Cast -->
+          <div class="mb-8">
+            <h3 class="text-xl font-bold mb-4">Cast</h3>
+            <p id="modalCast" class="text-gray-300"></p>
+          </div>
+
+          <!-- Play Button -->
+          <button id="playBtn" class="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold text-xl px-12 py-6 rounded-xl transition transform hover:scale-105 shadow-lg">
+            ▶ Play Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Section toggle
+    // ──────────────────────────────────────────────────────────────
+    // Section & Menu Controls
+    // ──────────────────────────────────────────────────────────────
     function showSection(id) {
       document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
       document.getElementById(id + 'Section').classList.remove('hidden');
@@ -170,6 +216,9 @@
 
     showSection('home');
 
+    // ──────────────────────────────────────────────────────────────
+    // TMDB Setup
+    // ──────────────────────────────────────────────────────────────
     const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
     const BASE_URL = 'https://api.themoviedb.org/3';
     const IMG_URL = 'https://image.tmdb.org/t/p/w500';
@@ -189,9 +238,12 @@
       return res.json();
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // Create Card (opens modal instead of direct player)
+    // ──────────────────────────────────────────────────────────────
     function createCard(item, mediaType = item.media_type || 'movie') {
       const card = document.createElement('div');
-      card.className = 'card relative group';
+      card.className = 'card relative group cursor-pointer';
 
       const isFav = isFavorite(item.id, mediaType);
       const heartClass = isFav ? 'favorited' : '';
@@ -205,14 +257,63 @@
         </div>
       `;
 
-      card.onclick = (e) => {
-        if (e.target.classList.contains('heart')) return;
-        window.location.href = `player.html?type=${mediaType}&id=${item.id}`;
-      };
+      card.onclick = () => openModal(item, mediaType);
 
       return card;
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // Modal Controls
+    // ──────────────────────────────────────────────────────────────
+    const modal = document.getElementById('infoModal');
+    let currentItem = null;
+
+    async function openModal(item, mediaType) {
+      currentItem = { ...item, media_type: mediaType };
+
+      // Fetch full details (for runtime, genres, cast, etc.)
+      try {
+        const fullData = await fetchTMDB(`/${mediaType}/${item.id}?append_to_response=credits`);
+        document.getElementById('modalTitle').textContent = fullData.title || fullData.name || 'Untitled';
+        document.getElementById('modalOverview').textContent = fullData.overview || 'No description available.';
+        document.getElementById('modalPoster').src = 'https://image.tmdb.org/t/p/w780' + (fullData.poster_path || fullData.backdrop_path || '');
+        document.getElementById('modalRating').textContent = fullData.vote_average ? fullData.vote_average.toFixed(1) + ' ★' : 'N/A';
+        document.getElementById('modalYear').textContent = (fullData.release_date || fullData.first_air_date || '').split('-')[0] || 'N/A';
+        document.getElementById('modalRuntime').textContent = fullData.runtime ? fullData.runtime + ' min' : (fullData.number_of_seasons ? fullData.number_of_seasons + ' Seasons' : '');
+        document.getElementById('modalGenres').textContent = fullData.genres ? fullData.genres.map(g => g.name).join(', ') : 'N/A';
+        document.getElementById('modalCast').textContent = fullData.credits?.cast?.slice(0,6).map(c => c.name).join(', ') || 'Cast info not available';
+
+      } catch (err) {
+        document.getElementById('modalTitle').textContent = item.title || item.name || 'Untitled';
+        document.getElementById('modalOverview').textContent = item.overview || 'No description available.';
+        document.getElementById('modalPoster').src = 'https://image.tmdb.org/t/p/w780' + (item.poster_path || '');
+        document.getElementById('modalRating').textContent = 'N/A';
+        document.getElementById('modalYear').textContent = 'N/A';
+        document.getElementById('modalRuntime').textContent = 'N/A';
+        document.getElementById('modalGenres').textContent = 'N/A';
+        document.getElementById('modalCast').textContent = 'Cast info not available';
+      }
+
+      modal.classList.remove('hidden');
+
+      // Play button
+      document.getElementById('playBtn').onclick = () => {
+        window.location.href = `player.html?type=${mediaType}&id=${item.id}`;
+      };
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      currentItem = null;
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // ──────────────────────────────────────────────────────────────
+    // Load Home Content
+    // ──────────────────────────────────────────────────────────────
     async function loadHome() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       homeMoviesGrid.innerHTML = '';
@@ -236,6 +337,9 @@
         });
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // Favorites
+    // ──────────────────────────────────────────────────────────────
     function getFavorites() {
       return JSON.parse(localStorage.getItem('cathq_favorites') || '[]');
     }
@@ -284,6 +388,9 @@
       });
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // History
+    // ──────────────────────────────────────────────────────────────
     function loadHistory() {
       const grid = document.getElementById('historyGrid');
       grid.innerHTML = '';
@@ -301,7 +408,7 @@
           if (!data || !data.title) return;
 
           const parts = key.split('_');
-          const type = parts[2];  // movie or tv
+          const type = parts[2];
           const id = parts[3];
 
           const card = createCard({ id: Number(id), title: data.title, poster_path: data.poster_path || '', media_type: type }, type);
@@ -316,6 +423,22 @@
         }
       });
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // Search
+    // ──────────────────────────────────────────────────────────────
+    searchInput.addEventListener('input', async (e) => {
+      const q = e.target.value.trim();
+      if (q.length < 3) return showSection('home');
+
+      showSection('movies');
+      try {
+        const { results } = await fetchTMDB(`/search/multi?query=${encodeURIComponent(q)}&page=1`);
+        document.getElementById('moviesGrid').innerHTML = '<p class="col-span-full text-3xl font-black text-center mb-10">Search Results</p>';
+        results.filter(r => (r.media_type === 'movie' || r.media_type === 'tv') && r.poster_path)
+               .slice(0,18).forEach(item => document.getElementById('moviesGrid').appendChild(createCard(item)));
+      } catch {}
+    });
 
     loadHome();
   </script>
