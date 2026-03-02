@@ -166,10 +166,10 @@
       }
 
       function loadPlayer(season, episode) {
-        const base = 'https://embed.vidsrc.me/embed';  // Updated working base
+        const base = 'https://vsembed.su/embed';  // Updated to new domain
         let src = type === 'movie' 
-          ? `${base}/movie/${id}?autoplay=1`
-          : `${base}/tv/${id}/${season}/${episode}?autoplay=1&autonext=1`;
+          ? `${base}/movie?tmdb=${id}&autoplay=1`
+          : `${base}/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`;
 
         document.getElementById('playerFrame').src = src;
       }
