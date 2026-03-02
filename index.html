@@ -9,7 +9,6 @@
     body {
       background: #0a0a0f;
       color: #e5e7eb;
-      font-family: system-ui, -apple-system, sans-serif;
       min-height: 100vh;
     }
     .nav {
@@ -22,11 +21,10 @@
       border: 1px solid #1f2937;
       border-radius: 0.75rem;
       overflow: hidden;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease;
     }
     .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+      transform: translateY(-6px);
     }
     .heart {
       position: absolute;
@@ -50,11 +48,8 @@
       50%  { transform: scale(1.4); }
       100% { transform: scale(1.2); }
     }
-    h1, h2 {
-      color: #f3f4f6;
-    }
     .modal-bg {
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.9);
       backdrop-filter: blur(8px);
     }
   </style>
@@ -64,24 +59,24 @@
   <!-- Navigation -->
   <nav class="nav fixed w-full top-0 z-50 py-4">
     <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
-      <h1 class="text-3xl font-bold tracking-tight text-white">CATHQ</h1>
+      <h1 class="text-3xl font-bold text-white">CATHQ</h1>
 
       <div class="hidden md:flex items-center space-x-10 text-base">
-        <button onclick="showSection('home')" class="hover:text-gray-300 transition">Home</button>
-        <button onclick="showSection('movies')" class="hover:text-gray-300 transition">Movies</button>
-        <button onclick="showSection('tv')" class="hover:text-gray-300 transition">TV Shows</button>
+        <button onclick="showSection('home')" class="hover:text-gray-300">Home</button>
+        <button onclick="showSection('movies')" class="hover:text-gray-300">Movies</button>
+        <button onclick="showSection('tv')" class="hover:text-gray-300">TV Shows</button>
       </div>
 
       <div class="relative">
-        <button id="menuBtn" class="text-2xl text-gray-300 focus:outline-none hover:text-white transition">☰</button>
-        <div id="dropdownMenu" class="hidden absolute right-0 mt-3 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-[2000]">
+        <button id="menuBtn" class="text-2xl text-gray-300 focus:outline-none hover:text-white">☰</button>
+        <div id="dropdownMenu" class="hidden absolute right-0 mt-3 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-[2000]">
           <div class="py-2">
-            <button onclick="showSection('home'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800 transition text-gray-200">Home</button>
-            <button onclick="showSection('movies'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800 transition text-gray-200">Movies</button>
-            <button onclick="showSection('tv'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800 transition text-gray-200">TV Shows</button>
+            <button onclick="showSection('home'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">Home</button>
+            <button onclick="showSection('movies'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">Movies</button>
+            <button onclick="showSection('tv'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">TV Shows</button>
             <hr class="border-gray-700 my-1">
-            <button onclick="showSection('history'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800 transition text-gray-200">History</button>
-            <button onclick="showSection('favorites'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800 transition text-gray-200">Favorites</button>
+            <button onclick="showSection('history'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">History</button>
+            <button onclick="showSection('favorites'); toggleDropdown()" class="block w-full text-left px-6 py-3 hover:bg-gray-800">Favorites</button>
           </div>
         </div>
       </div>
@@ -107,23 +102,26 @@
     <div id="recentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
   </section>
 
-  <!-- Other sections -->
+  <!-- Movies -->
   <section id="moviesSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Movies</h2>
     <div id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
   </section>
 
+  <!-- TV Shows -->
   <section id="tvSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">TV Shows</h2>
     <div id="tvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
   </section>
 
+  <!-- History -->
   <section id="historySection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Watch History</h2>
     <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
     <p id="noHistory" class="text-center text-gray-400 mt-12 hidden">No history yet.</p>
   </section>
 
+  <!-- Favorites -->
   <section id="favoritesSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Favorites</h2>
     <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
@@ -132,15 +130,15 @@
 
   <!-- Info Modal -->
   <div id="infoModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] hidden">
-    <div class="relative w-full max-w-4xl mx-4 bg-gray-900 rounded-xl overflow-hidden shadow-2xl border border-gray-800">
-      <button onclick="closeModal()" class="absolute top-4 right-6 text-4xl text-gray-400 hover:text-white transition z-10">×</button>
+    <div class="relative w-full max-w-4xl mx-4 bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
+      <button onclick="closeModal()" class="absolute top-4 right-6 text-4xl text-gray-400 hover:text-white">×</button>
 
       <div class="flex flex-col md:flex-row">
         <div class="md:w-2/5">
           <img id="modalPoster" class="w-full h-full object-cover" alt="Poster">
         </div>
         <div class="p-8 flex-1">
-          <h2 id="modalTitle" class="text-3xl font-bold mb-4"></h2>
+          <h2 id="modalTitle" class="text-3xl font-bold mb-4 text-white"></h2>
           <div class="flex flex-wrap gap-4 mb-6 text-sm">
             <span id="modalRating" class="bg-yellow-600 text-black px-2 py-1 rounded font-semibold"></span>
             <span id="modalYear" class="text-gray-400"></span>
@@ -156,9 +154,6 @@
   </div>
 
   <script>
-    // ──────────────────────────────────────────────────────────────
-    // Section & Menu
-    // ──────────────────────────────────────────────────────────────
     function showSection(id) {
       document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
       document.getElementById(id + 'Section').classList.remove('hidden');
@@ -177,9 +172,6 @@
 
     showSection('home');
 
-    // ──────────────────────────────────────────────────────────────
-    // TMDB & Cards
-    // ──────────────────────────────────────────────────────────────
     const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
     const BASE_URL = 'https://api.themoviedb.org/3';
     const IMG_URL = 'https://image.tmdb.org/t/p/w500';
@@ -188,6 +180,10 @@
     const homeMoviesGrid = document.getElementById('homeMoviesGrid');
     const homeTvGrid = document.getElementById('homeTvGrid');
     const recentGrid = document.getElementById('recentGrid');
+    const historyGrid = document.getElementById('historyGrid');
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    const noHistory = document.getElementById('noHistory');
+    const noFavorites = document.getElementById('noFavorites');
 
     async function fetchTMDB(endpoint) {
       const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
@@ -216,9 +212,6 @@
       return card;
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // Modal
-    // ──────────────────────────────────────────────────────────────
     const modal = document.getElementById('infoModal');
 
     async function openModal(item, mediaType) {
@@ -249,9 +242,6 @@
       if (e.target === modal) closeModal();
     };
 
-    // ──────────────────────────────────────────────────────────────
-    // Favorites & History (unchanged logic, just call functions)
-    // ──────────────────────────────────────────────────────────────
     function getFavorites() {
       return JSON.parse(localStorage.getItem('cathq_favorites') || '[]');
     }
@@ -317,7 +307,6 @@
       });
     }
 
-    // Load home content
     async function loadHome() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       homeMoviesGrid.innerHTML = '';
@@ -345,5 +334,3 @@
   </script>
 </body>
 </html>
-
-
