@@ -10,7 +10,6 @@
       background: #000000;
       color: #ffffff;
       min-height: 100vh;
-      font-family: system-ui, sans-serif;
     }
     .nav {
       background: rgba(0,0,0,0.9);
@@ -21,49 +20,36 @@
       background: #0f0f0f;
       border: 1px solid #1a1a1a;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
     .player-wrapper {
       background: #000;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-      position: relative;
     }
     iframe {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       border: none;
     }
-    .overlay-warning {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      text-align: center;
-      padding: 2rem;
-      pointer-events: none;
+    h1, h2, p, span, div, label, select {
+      color: #ffffff !important;
     }
-    h1, h2, p, span {
-      color: #ffffff;
+    select {
+      background: #111;
+      border: 1px solid #333;
     }
   </style>
 </head>
 <body class="min-h-screen">
 
-  <!-- Navigation -->
   <nav class="nav fixed w-full top-0 z-50 py-4">
     <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
       <a href="index.html" class="text-3xl md:text-4xl font-bold text-white">CATHQ</a>
-      <a href="index.html" class="text-lg text-gray-300 hover:text-white transition">← Back to Home</a>
+      <a href="index.html" class="text-lg text-gray-300 hover:text-white transition">← Back</a>
     </div>
   </nav>
 
-  <!-- Content -->
   <div class="pt-24 px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
     <div id="loading" class="text-center text-3xl font-bold text-white animate-pulse py-20">
       Loading...
@@ -75,31 +61,27 @@
           <img id="poster" class="w-full rounded-lg shadow-2xl object-cover" alt="Poster">
         </div>
         <div class="flex-1">
-          <h1 id="title" class="text-3xl md:text-4xl font-bold mb-4"></h1>
-          <p id="overview" class="text-gray-300 leading-relaxed"></p>
+          <h1 id="title" class="text-3xl md:text-4xl font-bold mb-4 text-white"></h1>
+          <p id="overview" class="text-gray-200 leading-relaxed"></p>
         </div>
       </div>
 
-      <!-- TV selectors -->
       <div id="tvSelectors" class="hidden mt-8">
         <h2 class="text-2xl font-semibold mb-6 text-white">Select Episode</h2>
         <div class="flex flex-wrap gap-6">
           <div class="min-w-[160px]">
             <label class="block mb-2 text-white">Season</label>
             <select id="seasonSelect" class="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-gray-500">
-              <!-- options filled by JS -->
             </select>
           </div>
           <div class="min-w-[200px]">
             <label class="block mb-2 text-white">Episode</label>
             <select id="episodeSelect" class="w-full bg-gray-900 border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-gray-500">
-              <!-- options filled by JS -->
             </select>
           </div>
         </div>
       </div>
 
-      <!-- Player -->
       <div class="mt-10 player-wrapper relative">
         <div class="relative pt-[56.25%] bg-black">
           <iframe 
@@ -110,10 +92,6 @@
             allow="encrypted-media"
             sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
           ></iframe>
-        </div>
-        <div id="playerError" class="overlay-warning hidden">
-          Player may be blocked or failed to load.<br>
-          Try disabling ad-blocker, using Brave browser, or refreshing.
         </div>
       </div>
     </div>
@@ -193,18 +171,9 @@
           ? `${base}/movie?tmdb=${id}&autoplay=1`
           : `${base}/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`;
 
-        const iframe = document.getElementById('playerFrame');
-        iframe.src = src;
-
-        // Show fallback message if iframe fails to load content after 10 seconds
-        setTimeout(() => {
-          if (iframe.contentDocument && iframe.contentDocument.body.innerHTML.trim() === '') {
-            document.getElementById('playerError').classList.remove('hidden');
-          }
-        }, 10000);
+        document.getElementById('playerFrame').src = src;
       }
 
-      // Progress saving & resume (unchanged)
       const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
       let currentSeason = 1;
       let currentEpisode = 1;
