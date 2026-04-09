@@ -6,14 +6,11 @@
   <title>CATHQ Player</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background: #0a0a0f; color: #f1f1f1; }
-    .nav-blur {
-      background: rgba(15,15,20,0.95);
-      backdrop-filter: blur(12px);
-    }
+    body { background: #0a0a0f; color: #f1f1f1; min-height: 100vh; }
+    .nav-blur { background: rgba(15,15,20,0.95); backdrop-filter: blur(12px); }
   </style>
 </head>
-<body class="min-h-screen">
+<body>
   <nav class="nav-blur fixed w-full top-0 z-50 py-4">
     <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
       <a href="index.html" class="text-3xl font-bold text-red-600">CATHQ</a>
@@ -21,19 +18,32 @@
     </div>
   </nav>
 
-  <div class="max-w-7xl mx-auto px-6 pt-28 pb-12">
+  <div class="max-w-7xl mx-auto px-6 pt-32 pb-20">
     <div id="detail" class="hidden">
       <div class="flex flex-col md:flex-row gap-10">
         <img id="poster" class="w-full md:w-80 rounded-xl" alt="Poster">
-        <div>
+        <div class="flex-1">
           <h1 id="title" class="text-5xl font-bold mb-4"></h1>
-          <p id="overview" class="text-gray-300 text-lg"></p>
+          <p id="overview" class="text-gray-300"></p>
         </div>
       </div>
 
-      <div class="mt-12">
-        <div class="relative pt-[56.25%] bg-black rounded-2xl overflow-hidden">
-          <iframe id="playerFrame" class="absolute inset-0 w-full h-full" frameborder="0" allowfullscreen allow="encrypted-media"></iframe>
+      <div id="tvSelectors" class="mt-8 hidden">
+        <div class="flex gap-6">
+          <div>
+            <label class="block text-sm mb-1">Season</label>
+            <select id="seasonSelect" class="bg-gray-900 border border-gray-700 px-4 py-2 rounded"></select>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Episode</label>
+            <select id="episodeSelect" class="bg-gray-900 border border-gray-700 px-4 py-2 rounded"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 rounded-2xl overflow-hidden border border-gray-800">
+        <div class="relative pt-[56.25%] bg-black">
+          <iframe id="playerFrame" class="absolute inset-0 w-full h-full" frameborder="0" allowfullscreen></iframe>
         </div>
       </div>
     </div>
@@ -48,62 +58,76 @@
     const id = urlParams.get('id');
     const resume = urlParams.get('resume') === '1';
 
+    let currentSeason = 1;
+    let currentEpisode = 1;
+
     async function loadDetail() {
-      const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}`, { headers });
-      const data = await res.json();
+      const data = await fetch(`https://api.themoviedb.org/3/${type}/${id}`, { headers }).then(r => r.json());
 
       document.getElementById('title').textContent = data.title || data.name;
-      document.getElementById('overview').textContent = data.overview;
+      document.getElementById('overview').textContent = data.overview || '';
       document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || '');
 
-      // Save basic info for history
       const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
       const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify({
-        ...existing,
-        title: data.title || data.name,
-        poster_path: data.poster_path
-      }));
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...existing, title: data.title || data.name, poster_path: data.poster_path }));
 
-      let src = '';
-      const base = 'https://vidsrc-embed.ru/embed';
-      
-      if (type === 'movie') {
-        src = `${base}/movie?tmdb=${id}&autoplay=1`;
-      } else {
-        src = `${base}/tv?tmdb=${id}&season=1&episode=1&autoplay=1`;
-      }
-
-      document.getElementById('playerFrame').src = src;
-      document.getElementById('detail').classList.remove('hidden');
-
-      // Resume logic
-      if (resume) {
-        const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
-        if (saved.time) {
-          setTimeout(() => {
-            const iframe = document.getElementById('playerFrame');
-            iframe.contentWindow.postMessage({ 
-              command: 'seek', 
-              time: saved.time 
-            }, '*');
-          }, 8000);
+      if (type === 'tv') {
+        document.getElementById('tvSelectors').classList.remove('hidden');
+        // Populate seasons (simplified - you can expand later)
+        const seasonSelect = document.getElementById('seasonSelect');
+        for (let s = 1; s <= (data.number_of_seasons || 1); s++) {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = `Season ${s}`;
+          seasonSelect.appendChild(opt);
         }
+        seasonSelect.onchange = () => loadEpisodeList(parseInt(seasonSelect.value));
+        loadEpisodeList(1);
       }
+
+      loadPlayer();
     }
 
-    // Progress saving
+    function loadEpisodeList(season) {
+      currentSeason = season;
+      // For simplicity we start at episode 1. You can fetch real episodes if needed.
+      const epSelect = document.getElementById('episodeSelect');
+      epSelect.innerHTML = '';
+      for (let e = 1; e <= 20; e++) {  // adjust max as needed
+        const opt = document.createElement('option');
+        opt.value = e;
+        opt.textContent = `Episode ${e}`;
+        epSelect.appendChild(opt);
+      }
+      epSelect.onchange = () => {
+        currentEpisode = parseInt(epSelect.value);
+        loadPlayer();
+      };
+    }
+
+    function loadPlayer() {
+      const base = 'https://vidsrc-embed.ru/embed';
+      let src = type === 'movie' 
+        ? `${base}/movie?tmdb=${id}&autoplay=1` 
+        : `${base}/tv?tmdb=${id}&season=${currentSeason}&episode=${currentEpisode}&autoplay=1`;
+
+      document.getElementById('playerFrame').src = src;
+    }
+
+    // Progress saving with season/episode
     window.addEventListener('message', (event) => {
       if (event.data?.type === 'PLAYER_EVENT') {
         const { event: ev, currentTime, duration } = event.data.data || {};
         if (ev === 'timeupdate' && currentTime && duration) {
           const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
-          const progress = {
+          localStorage.setItem(PROGRESS_KEY, JSON.stringify({
             time: Math.floor(currentTime),
             duration: Math.floor(duration),
+            season: currentSeason,
+            episode: currentEpisode,
             lastWatched: Date.now()
-          };
-          localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+          }));
         }
       }
     });
