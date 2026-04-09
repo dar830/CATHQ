@@ -89,7 +89,7 @@
   </style>
 </head>
 <body>
-  <!-- Navigation -->
+  <!-- Navigation (your original) -->
   <nav class="fixed w-full top-0 z-50 py-4">
     <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
       <h1 class="text-3xl font-bold text-white">CATHQ</h1>
@@ -134,7 +134,7 @@
     <div id="searchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
   </section>
 
-  <!-- Home -->
+  <!-- Home, Movies, TV, History, Favorites sections (your original) -->
   <section id="homeSection" class="pt-8 pb-16 px-6">
     <div class="text-center mb-12">
       <h2 class="text-5xl font-bold mb-3">CATHQ</h2>
@@ -146,26 +146,22 @@
     <div id="homeTvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-12"></div>
   </section>
 
-  <!-- Movies -->
   <section id="moviesSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Movies</h2>
     <div id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
   </section>
 
-  <!-- TV Shows -->
   <section id="tvSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">TV Shows</h2>
     <div id="tvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
   </section>
 
-  <!-- History -->
   <section id="historySection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Watch History</h2>
     <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
     <p id="noHistory" class="text-center text-gray-400 mt-12 hidden">No history yet.</p>
   </section>
 
-  <!-- Favorites -->
   <section id="favoritesSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Favorites</h2>
     <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
@@ -197,7 +193,7 @@
   </div>
 
   <script>
-    // Section toggle
+    // Section toggle + menu
     function showSection(id) {
       document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
       document.getElementById(id + 'Section').classList.remove('hidden');
@@ -239,7 +235,7 @@
       }
     }
 
-    // Updated createCard with Season Episode label for TV shows
+    // Create card with progress bar + S/E label for TV
     function createCard(item, mediaType = item.media_type || 'movie') {
       const card = document.createElement('div');
       card.className = 'card relative group cursor-pointer';
@@ -281,7 +277,7 @@
       return card;
     }
 
-    // Modal with Play button going to player
+    // Modal
     const modal = document.getElementById('infoModal');
     async function openModal(item, mediaType) {
       try {
@@ -301,7 +297,6 @@
         console.error('Modal error:', err);
       }
     }
-
     function closeModal() {
       modal.classList.add('hidden');
     }
@@ -365,41 +360,33 @@
     async function loadHome() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       homeMoviesGrid.innerHTML = '';
-      if (movies.results?.length) {
-        movies.results.slice(0,12).forEach(m => {
-          if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
-        });
-      }
+      movies.results?.slice(0,12).forEach(m => {
+        if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
+      });
       const tv = await fetchTMDB('/tv/popular?page=1');
       homeTvGrid.innerHTML = '';
-      if (tv.results?.length) {
-        tv.results.slice(0,12).forEach(s => {
-          if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
-        });
-      }
+      tv.results?.slice(0,12).forEach(s => {
+        if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
+      });
     }
 
     async function loadMovies() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       moviesGrid.innerHTML = '';
-      if (movies.results?.length) {
-        movies.results.slice(0,18).forEach(m => {
-          if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
-        });
-      }
+      movies.results?.slice(0,18).forEach(m => {
+        if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
+      });
     }
 
     async function loadTV() {
       const tv = await fetchTMDB('/tv/popular?page=1');
       tvGrid.innerHTML = '';
-      if (tv.results?.length) {
-        tv.results.slice(0,18).forEach(s => {
-          if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
-        });
-      }
+      tv.results?.slice(0,18).forEach(s => {
+        if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
+      });
     }
 
-    // Fixed Search (case-insensitive and more reliable)
+    // Fixed Search
     const searchInput = document.getElementById('searchInput');
     const searchSection = document.getElementById('searchSection');
     const searchGrid = document.getElementById('searchGrid');
@@ -443,9 +430,7 @@
       if (pageItems.length === 0) {
         searchGrid.innerHTML = '<p class="col-span-full text-center text-gray-400">No results found.</p>';
       } else {
-        pageItems.forEach(item => {
-          searchGrid.appendChild(createCard(item, item.media_type));
-        });
+        pageItems.forEach(item => searchGrid.appendChild(createCard(item, item.media_type)));
       }
       renderPagination();
     }
