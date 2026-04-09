@@ -18,12 +18,12 @@
     }
     #loading, #errorMsg {
       text-align: center;
-      padding: 2rem;
-      font-size: 1.25rem;
+      padding: 3rem 1rem;
+      font-size: 1.3rem;
     }
     #errorMsg {
       color: #ef4444;
-      background: rgba(239,68,68,0.1);
+      background: rgba(239,68,68,0.15);
       border: 1px solid #ef4444;
       border-radius: 0.5rem;
     }
@@ -53,20 +53,22 @@
         </div>
       </div>
 
-      <div id="tvSelectors" class="hidden mb-8">
+      <!-- TV Show Season & Episode Selector -->
+      <div id="tvSelectors" class="hidden mb-8 p-6 bg-gray-900 rounded-xl">
         <h3 class="text-xl font-semibold mb-4">Choose Episode</h3>
-        <div class="flex gap-6">
+        <div class="flex flex-wrap gap-6">
           <div>
-            <label class="block text-sm mb-2">Season</label>
-            <select id="seasonSelect" class="bg-gray-900 border border-gray-700 px-5 py-3 rounded-lg text-white"></select>
+            <label class="block text-sm mb-2 text-gray-400">Season</label>
+            <select id="seasonSelect" class="bg-gray-800 border border-gray-700 px-5 py-3 rounded-lg text-white min-w-[140px]"></select>
           </div>
           <div>
-            <label class="block text-sm mb-2">Episode</label>
-            <select id="episodeSelect" class="bg-gray-900 border border-gray-700 px-5 py-3 rounded-lg text-white"></select>
+            <label class="block text-sm mb-2 text-gray-400">Episode</label>
+            <select id="episodeSelect" class="bg-gray-800 border border-gray-700 px-5 py-3 rounded-lg text-white min-w-[140px]"></select>
           </div>
         </div>
       </div>
 
+      <!-- Player -->
       <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
         <div class="relative pt-[56.25%] bg-black">
           <iframe id="playerFrame" class="absolute inset-0 w-full h-full" 
@@ -75,7 +77,7 @@
       </div>
     </div>
 
-    <div id="errorMsg" class="hidden mt-8 text-center"></div>
+    <div id="errorMsg" class="hidden mt-8"></div>
   </div>
 
   <script>
@@ -92,7 +94,7 @@
 
     async function loadDetail() {
       if (!type || !id) {
-        showError("Invalid link. Go back to home.");
+        showError("Invalid link. Please go back.");
         return;
       }
 
@@ -106,7 +108,7 @@
         document.getElementById('overview').textContent = data.overview || 'No overview available.';
         document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || data.backdrop_path || '');
 
-        // Save basic info for history
+        // Save for history
         const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
         const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
         localStorage.setItem(PROGRESS_KEY, JSON.stringify({
@@ -122,7 +124,7 @@
 
         loadPlayer();
 
-        // Resume if requested
+        // Resume logic
         if (resume) {
           const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
           if (saved.time > 30) {
@@ -131,11 +133,11 @@
               if (iframe.contentWindow) {
                 iframe.contentWindow.postMessage({ command: 'seek', time: saved.time }, '*');
               }
-            }, 8000);
+            }, 7000);
           }
         }
       } catch (err) {
-        showError("Failed to load details. Please try again later.");
+        showError("Failed to load content. Please try again.");
         console.error(err);
       }
     }
@@ -143,10 +145,10 @@
     function setupTVSelectors(data) {
       const seasonSelect = document.getElementById('seasonSelect');
       seasonSelect.innerHTML = '';
-      for (let i = 1; i <= (data.number_of_seasons || 5); i++) {
+      for (let s = 1; s <= (data.number_of_seasons || 5); s++) {
         const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = `Season ${i}`;
+        opt.value = s;
+        opt.textContent = `Season ${s}`;
         seasonSelect.appendChild(opt);
       }
       seasonSelect.onchange = () => {
@@ -156,10 +158,10 @@
 
       const episodeSelect = document.getElementById('episodeSelect');
       episodeSelect.innerHTML = '';
-      for (let i = 1; i <= 20; i++) {   // You can increase this
+      for (let e = 1; e <= 24; e++) {
         const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = `Episode ${i}`;
+        opt.value = e;
+        opt.textContent = `Episode ${e}`;
         episodeSelect.appendChild(opt);
       }
       episodeSelect.onchange = () => {
@@ -169,13 +171,14 @@
     }
 
     function loadPlayer() {
-      const base = 'https://www.2embed.ru';   // More reliable embed
+      // Using the new domain you provided
+      const base = 'https://vsembed.ru';
       let src = '';
 
       if (type === 'movie') {
-        src = `${base}/embed/tmdb/movie?id=${id}`;
+        src = `${base}/embed/movie?tmdb=${id}`;
       } else {
-        src = `${base}/embed/tmdb/tv?id=${id}&s=${currentSeason}&e=${currentEpisode}`;
+        src = `${base}/embed/tv?tmdb=${id}&season=${currentSeason}&episode=${currentEpisode}`;
       }
 
       document.getElementById('playerFrame').src = src;
@@ -184,11 +187,11 @@
     function showError(message) {
       document.getElementById('loading').classList.add('hidden');
       const errorEl = document.getElementById('errorMsg');
-      errorEl.textContent = message;
+      errorEl.innerHTML = message + '<br><br><a href="index.html" class="text-red-500 underline">← Go back to home</a>';
       errorEl.classList.remove('hidden');
     }
 
-    // Save progress (including season/episode for TV)
+    // Save progress (works for both movie and TV)
     window.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'PLAYER_EVENT') {
         const { event: ev, currentTime, duration } = event.data.data || {};
@@ -205,7 +208,7 @@
       }
     });
 
-    // Start loading
+    // Start
     loadDetail();
   </script>
 </body>
