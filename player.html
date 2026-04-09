@@ -6,47 +6,76 @@
   <title>CATHQ Player</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background: #0a0a0f; color: #f1f1f1; min-height: 100vh; }
-    .nav-blur { background: rgba(15,15,20,0.95); backdrop-filter: blur(12px); }
+    body {
+      background: #0a0a0f;
+      color: #f1f1f1;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+    }
+    .nav-blur {
+      background: rgba(15,15,20,0.95);
+      backdrop-filter: blur(12px);
+    }
+    #loading, #errorMsg {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.25rem;
+    }
+    #errorMsg {
+      color: #ef4444;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid #ef4444;
+      border-radius: 0.5rem;
+    }
   </style>
 </head>
 <body>
   <nav class="nav-blur fixed w-full top-0 z-50 py-4">
     <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
       <a href="index.html" class="text-3xl font-bold text-red-600">CATHQ</a>
-      <a href="index.html" class="text-lg hover:text-red-500">← Back</a>
+      <a href="index.html" class="text-lg font-medium hover:text-red-400 transition">← Back to Home</a>
     </div>
   </nav>
 
   <div class="max-w-7xl mx-auto px-6 pt-32 pb-20">
+    <div id="loading" class="text-center text-3xl font-bold text-gray-300 animate-pulse">
+      Loading player...
+    </div>
+
     <div id="detail" class="hidden">
-      <div class="flex flex-col md:flex-row gap-10">
-        <img id="poster" class="w-full md:w-80 rounded-xl" alt="Poster">
+      <div class="flex flex-col md:flex-row gap-10 mb-10">
+        <div class="md:w-80 flex-shrink-0">
+          <img id="poster" class="w-full rounded-xl shadow-2xl" alt="Poster">
+        </div>
         <div class="flex-1">
-          <h1 id="title" class="text-5xl font-bold mb-4"></h1>
-          <p id="overview" class="text-gray-300"></p>
+          <h1 id="title" class="text-4xl md:text-5xl font-bold mb-4"></h1>
+          <p id="overview" class="text-lg text-gray-300 leading-relaxed"></p>
         </div>
       </div>
 
-      <div id="tvSelectors" class="mt-8 hidden">
+      <div id="tvSelectors" class="hidden mb-8">
+        <h3 class="text-xl font-semibold mb-4">Choose Episode</h3>
         <div class="flex gap-6">
           <div>
-            <label class="block text-sm mb-1">Season</label>
-            <select id="seasonSelect" class="bg-gray-900 border border-gray-700 px-4 py-2 rounded"></select>
+            <label class="block text-sm mb-2">Season</label>
+            <select id="seasonSelect" class="bg-gray-900 border border-gray-700 px-5 py-3 rounded-lg text-white"></select>
           </div>
           <div>
-            <label class="block text-sm mb-1">Episode</label>
-            <select id="episodeSelect" class="bg-gray-900 border border-gray-700 px-4 py-2 rounded"></select>
+            <label class="block text-sm mb-2">Episode</label>
+            <select id="episodeSelect" class="bg-gray-900 border border-gray-700 px-5 py-3 rounded-lg text-white"></select>
           </div>
         </div>
       </div>
 
-      <div class="mt-10 rounded-2xl overflow-hidden border border-gray-800">
+      <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
         <div class="relative pt-[56.25%] bg-black">
-          <iframe id="playerFrame" class="absolute inset-0 w-full h-full" frameborder="0" allowfullscreen></iframe>
+          <iframe id="playerFrame" class="absolute inset-0 w-full h-full" 
+                  frameborder="0" allowfullscreen allow="encrypted-media"></iframe>
         </div>
       </div>
     </div>
+
+    <div id="errorMsg" class="hidden mt-8 text-center"></div>
   </div>
 
   <script>
@@ -62,62 +91,106 @@
     let currentEpisode = 1;
 
     async function loadDetail() {
-      const data = await fetch(`https://api.themoviedb.org/3/${type}/${id}`, { headers }).then(r => r.json());
-
-      document.getElementById('title').textContent = data.title || data.name;
-      document.getElementById('overview').textContent = data.overview || '';
-      document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || '');
-
-      const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
-      const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...existing, title: data.title || data.name, poster_path: data.poster_path }));
-
-      if (type === 'tv') {
-        document.getElementById('tvSelectors').classList.remove('hidden');
-        // Populate seasons (simplified - you can expand later)
-        const seasonSelect = document.getElementById('seasonSelect');
-        for (let s = 1; s <= (data.number_of_seasons || 1); s++) {
-          const opt = document.createElement('option');
-          opt.value = s;
-          opt.textContent = `Season ${s}`;
-          seasonSelect.appendChild(opt);
-        }
-        seasonSelect.onchange = () => loadEpisodeList(parseInt(seasonSelect.value));
-        loadEpisodeList(1);
+      if (!type || !id) {
+        showError("Invalid link. Go back to home.");
+        return;
       }
 
-      loadPlayer();
+      try {
+        const data = await fetch(`https://api.themoviedb.org/3/${type}/${id}`, { headers }).then(r => r.json());
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('detail').classList.remove('hidden');
+
+        document.getElementById('title').textContent = data.title || data.name || 'Untitled';
+        document.getElementById('overview').textContent = data.overview || 'No overview available.';
+        document.getElementById('poster').src = 'https://image.tmdb.org/t/p/w780' + (data.poster_path || data.backdrop_path || '');
+
+        // Save basic info for history
+        const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
+        const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+          ...existing,
+          title: data.title || data.name,
+          poster_path: data.poster_path || ''
+        }));
+
+        if (type === 'tv') {
+          document.getElementById('tvSelectors').classList.remove('hidden');
+          setupTVSelectors(data);
+        }
+
+        loadPlayer();
+
+        // Resume if requested
+        if (resume) {
+          const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
+          if (saved.time > 30) {
+            setTimeout(() => {
+              const iframe = document.getElementById('playerFrame');
+              if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ command: 'seek', time: saved.time }, '*');
+              }
+            }, 8000);
+          }
+        }
+      } catch (err) {
+        showError("Failed to load details. Please try again later.");
+        console.error(err);
+      }
     }
 
-    function loadEpisodeList(season) {
-      currentSeason = season;
-      // For simplicity we start at episode 1. You can fetch real episodes if needed.
-      const epSelect = document.getElementById('episodeSelect');
-      epSelect.innerHTML = '';
-      for (let e = 1; e <= 20; e++) {  // adjust max as needed
+    function setupTVSelectors(data) {
+      const seasonSelect = document.getElementById('seasonSelect');
+      seasonSelect.innerHTML = '';
+      for (let i = 1; i <= (data.number_of_seasons || 5); i++) {
         const opt = document.createElement('option');
-        opt.value = e;
-        opt.textContent = `Episode ${e}`;
-        epSelect.appendChild(opt);
+        opt.value = i;
+        opt.textContent = `Season ${i}`;
+        seasonSelect.appendChild(opt);
       }
-      epSelect.onchange = () => {
-        currentEpisode = parseInt(epSelect.value);
+      seasonSelect.onchange = () => {
+        currentSeason = parseInt(seasonSelect.value);
+        loadPlayer();
+      };
+
+      const episodeSelect = document.getElementById('episodeSelect');
+      episodeSelect.innerHTML = '';
+      for (let i = 1; i <= 20; i++) {   // You can increase this
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `Episode ${i}`;
+        episodeSelect.appendChild(opt);
+      }
+      episodeSelect.onchange = () => {
+        currentEpisode = parseInt(episodeSelect.value);
         loadPlayer();
       };
     }
 
     function loadPlayer() {
-      const base = 'https://vidsrc-embed.ru/embed';
-      let src = type === 'movie' 
-        ? `${base}/movie?tmdb=${id}&autoplay=1` 
-        : `${base}/tv?tmdb=${id}&season=${currentSeason}&episode=${currentEpisode}&autoplay=1`;
+      const base = 'https://www.2embed.ru';   // More reliable embed
+      let src = '';
+
+      if (type === 'movie') {
+        src = `${base}/embed/tmdb/movie?id=${id}`;
+      } else {
+        src = `${base}/embed/tmdb/tv?id=${id}&s=${currentSeason}&e=${currentEpisode}`;
+      }
 
       document.getElementById('playerFrame').src = src;
     }
 
-    // Progress saving with season/episode
+    function showError(message) {
+      document.getElementById('loading').classList.add('hidden');
+      const errorEl = document.getElementById('errorMsg');
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+    }
+
+    // Save progress (including season/episode for TV)
     window.addEventListener('message', (event) => {
-      if (event.data?.type === 'PLAYER_EVENT') {
+      if (event.data && event.data.type === 'PLAYER_EVENT') {
         const { event: ev, currentTime, duration } = event.data.data || {};
         if (ev === 'timeupdate' && currentTime && duration) {
           const PROGRESS_KEY = `cathq_progress_${type}_${id}`;
@@ -132,7 +205,8 @@
       }
     });
 
-    if (type && id) loadDetail();
+    // Start loading
+    loadDetail();
   </script>
 </body>
 </html>
