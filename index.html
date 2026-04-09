@@ -34,8 +34,8 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 24px;
-      background: rgba(0,0,0,0.7);
+      height: 26px;
+      background: rgba(0,0,0,0.75);
       z-index: 10;
     }
     .progress-bar {
@@ -43,16 +43,16 @@
       bottom: 0;
       left: 0;
       height: 6px;
-      background: #e11d48; /* Netflix red */
+      background: #e11d48;
     }
     .episode-info {
       position: absolute;
-      bottom: 6px;
+      bottom: 7px;
       left: 8px;
       font-size: 10px;
-      color: #fff;
+      color: white;
       font-weight: 600;
-      text-shadow: 0 0 4px rgba(0,0,0,0.8);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
       z-index: 15;
     }
     .heart {
@@ -206,15 +206,12 @@
       if (id === 'movies') loadMovies();
       if (id === 'tv') loadTV();
     }
-
     document.getElementById('menuBtn').addEventListener('click', () => {
       document.getElementById('dropdownMenu').classList.toggle('hidden');
     });
-
     function toggleDropdown() {
       document.getElementById('dropdownMenu').classList.add('hidden');
     }
-
     showSection('home');
 
     const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
@@ -242,7 +239,7 @@
       }
     }
 
-    // Updated createCard with Season/Episode label for TV shows
+    // Updated createCard with Season Episode label for TV shows
     function createCard(item, mediaType = item.media_type || 'movie') {
       const card = document.createElement('div');
       card.className = 'card relative group cursor-pointer';
@@ -281,11 +278,10 @@
           openModal(item, mediaType);
         }
       };
-
       return card;
     }
 
-    // Modal, Favorites, History, Load functions (unchanged except using new createCard)
+    // Modal with Play button going to player
     const modal = document.getElementById('infoModal');
     async function openModal(item, mediaType) {
       try {
@@ -296,6 +292,7 @@
         document.getElementById('modalRating').textContent = full.vote_average ? full.vote_average.toFixed(1) : '—';
         document.getElementById('modalYear').textContent = (full.release_date || full.first_air_date || '').slice(0,4) || '—';
         document.getElementById('modalRuntime').textContent = full.runtime ? full.runtime + ' min' : (full.number_of_seasons ? full.number_of_seasons + ' Seasons' : '—');
+
         document.getElementById('playBtn').onclick = () => {
           window.location.href = `player.html?type=${mediaType}&id=${item.id}`;
         };
@@ -369,12 +366,16 @@
       const movies = await fetchTMDB('/movie/popular?page=1');
       homeMoviesGrid.innerHTML = '';
       if (movies.results?.length) {
-        movies.results.slice(0,12).forEach(m => homeMoviesGrid.appendChild(createCard(m, 'movie')));
+        movies.results.slice(0,12).forEach(m => {
+          if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
+        });
       }
       const tv = await fetchTMDB('/tv/popular?page=1');
       homeTvGrid.innerHTML = '';
       if (tv.results?.length) {
-        tv.results.slice(0,12).forEach(s => homeTvGrid.appendChild(createCard(s, 'tv')));
+        tv.results.slice(0,12).forEach(s => {
+          if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
+        });
       }
     }
 
@@ -382,7 +383,9 @@
       const movies = await fetchTMDB('/movie/popular?page=1');
       moviesGrid.innerHTML = '';
       if (movies.results?.length) {
-        movies.results.slice(0,18).forEach(m => moviesGrid.appendChild(createCard(m, 'movie')));
+        movies.results.slice(0,18).forEach(m => {
+          if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
+        });
       }
     }
 
@@ -390,11 +393,13 @@
       const tv = await fetchTMDB('/tv/popular?page=1');
       tvGrid.innerHTML = '';
       if (tv.results?.length) {
-        tv.results.slice(0,18).forEach(s => tvGrid.appendChild(createCard(s, 'tv')));
+        tv.results.slice(0,18).forEach(s => {
+          if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
+        });
       }
     }
 
-    // Fixed Search (case-insensitive + better filtering)
+    // Fixed Search (case-insensitive and more reliable)
     const searchInput = document.getElementById('searchInput');
     const searchSection = document.getElementById('searchSection');
     const searchGrid = document.getElementById('searchGrid');
@@ -406,23 +411,21 @@
     let currentMediaType = 'movie';
 
     searchInput.addEventListener('input', async (e) => {
-      const query = e.target.value.trim().toLowerCase();
+      const query = e.target.value.trim();
       if (query.length < 2) {
         searchSection.classList.add('hidden');
         showSection('home');
         return;
       }
-
       showSection('searchSection');
       searchTabs.classList.remove('hidden');
       searchGrid.innerHTML = '<p class="col-span-full text-center text-gray-400">Searching...</p>';
 
       try {
         const { results } = await fetchTMDB(`/search/multi?query=${encodeURIComponent(query)}&page=1`);
-        currentSearchResults = results
-          .filter(r => (r.media_type === 'movie' || r.media_type === 'tv') && r.poster_path)
-          .filter(r => (r.title || r.name || '').toLowerCase().includes(query)); // case-insensitive
-
+        currentSearchResults = results.filter(r => 
+          (r.media_type === 'movie' || r.media_type === 'tv') && r.poster_path
+        );
         currentPage = 1;
         renderSearchResults();
       } catch (err) {
@@ -451,13 +454,11 @@
       pagination.innerHTML = '';
       const totalPages = Math.ceil(currentSearchResults.filter(r => r.media_type === currentMediaType).length / itemsPerPage);
       if (totalPages <= 1) return;
-
       const prev = document.createElement('button');
       prev.textContent = '←';
       prev.disabled = currentPage === 1;
       prev.onclick = () => { currentPage--; renderSearchResults(); };
       pagination.appendChild(prev);
-
       for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
@@ -465,7 +466,6 @@
         btn.onclick = () => { currentPage = i; renderSearchResults(); };
         pagination.appendChild(btn);
       }
-
       const next = document.createElement('button');
       next.textContent = '→';
       next.disabled = currentPage === totalPages;
