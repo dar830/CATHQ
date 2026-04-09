@@ -29,13 +29,31 @@
       box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
       background: rgba(255,255,255,0.04);
     }
+    .progress-bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: rgba(0,0,0,0.7);
+      z-index: 10;
+    }
     .progress-bar {
       position: absolute;
       bottom: 0;
       left: 0;
       height: 6px;
       background: #e11d48; /* Netflix red */
-      z-index: 10;
+    }
+    .episode-info {
+      position: absolute;
+      bottom: 6px;
+      left: 8px;
+      font-size: 10px;
+      color: #fff;
+      font-weight: 600;
+      text-shadow: 0 0 4px rgba(0,0,0,0.8);
+      z-index: 15;
     }
     .heart {
       position: absolute;
@@ -71,7 +89,7 @@
   </style>
 </head>
 <body>
-  <!-- Navigation (your original) -->
+  <!-- Navigation -->
   <nav class="fixed w-full top-0 z-50 py-4">
     <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
       <h1 class="text-3xl font-bold text-white">CATHQ</h1>
@@ -96,14 +114,18 @@
     </div>
   </nav>
 
-  <!-- Search bar + Search tabs + Search Results (your original) -->
+  <!-- Search bar -->
   <div class="pt-20 pb-6 px-6 max-w-6xl mx-auto">
     <input id="searchInput" type="text" placeholder="Search movies or TV shows..." class="w-full bg-gray-900 border border-gray-700 text-white px-5 py-3 rounded-lg focus:outline-none focus:border-gray-500">
   </div>
+
+  <!-- Search tabs -->
   <div id="searchTabs" class="hidden px-6 max-w-6xl mx-auto mb-6 flex gap-6">
     <button onclick="showSearchTab('movie')" class="px-5 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">Movies</button>
     <button onclick="showSearchTab('tv')" class="px-5 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">TV Shows</button>
   </div>
+
+  <!-- Search Results -->
   <section id="searchSection" class="px-6 pb-16 hidden">
     <div class="flex flex-col items-center mb-6">
       <h2 class="text-2xl font-semibold mb-4">Search Results</h2>
@@ -112,7 +134,7 @@
     <div id="searchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
   </section>
 
-  <!-- Home, Movies, TV, History, Favorites sections (your original) -->
+  <!-- Home -->
   <section id="homeSection" class="pt-8 pb-16 px-6">
     <div class="text-center mb-12">
       <h2 class="text-5xl font-bold mb-3">CATHQ</h2>
@@ -124,29 +146,33 @@
     <div id="homeTvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-12"></div>
   </section>
 
+  <!-- Movies -->
   <section id="moviesSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Movies</h2>
     <div id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
   </section>
 
+  <!-- TV Shows -->
   <section id="tvSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">TV Shows</h2>
     <div id="tvGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
   </section>
 
+  <!-- History -->
   <section id="historySection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Watch History</h2>
     <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
     <p id="noHistory" class="text-center text-gray-400 mt-12 hidden">No history yet.</p>
   </section>
 
+  <!-- Favorites -->
   <section id="favoritesSection" class="px-6 pb-16 hidden">
     <h2 class="text-3xl font-bold mb-8 text-center">Favorites</h2>
     <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
     <p id="noFavorites" class="text-center text-gray-400 mt-12 hidden">No favorites yet.</p>
   </section>
 
-  <!-- Info Modal (your original) -->
+  <!-- Info Modal -->
   <div id="infoModal" class="fixed inset-0 modal-bg flex items-center justify-center z-[9999] hidden">
     <div class="relative w-full max-w-3xl mx-4 bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
       <button onclick="closeModal()" class="absolute top-3 right-4 text-3xl text-gray-400 hover:text-white">×</button>
@@ -171,7 +197,7 @@
   </div>
 
   <script>
-    // Section toggle + menu (your original)
+    // Section toggle
     function showSection(id) {
       document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
       document.getElementById(id + 'Section').classList.remove('hidden');
@@ -180,12 +206,15 @@
       if (id === 'movies') loadMovies();
       if (id === 'tv') loadTV();
     }
+
     document.getElementById('menuBtn').addEventListener('click', () => {
       document.getElementById('dropdownMenu').classList.toggle('hidden');
     });
+
     function toggleDropdown() {
       document.getElementById('dropdownMenu').classList.add('hidden');
     }
+
     showSection('home');
 
     const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
@@ -213,7 +242,7 @@
       }
     }
 
-    // ================== UPDATED CREATE CARD WITH NETFLIX PROGRESS BAR ==================
+    // Updated createCard with Season/Episode label for TV shows
     function createCard(item, mediaType = item.media_type || 'movie') {
       const card = document.createElement('div');
       card.className = 'card relative group cursor-pointer';
@@ -222,10 +251,20 @@
       const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}');
       const progressPercent = saved.duration ? Math.min(Math.floor((saved.time / saved.duration) * 100), 98) : 0;
 
+      let extraHTML = '';
+      if (mediaType === 'tv' && saved.season && saved.episode) {
+        extraHTML = `<div class="episode-info">S${saved.season} E${saved.episode}</div>`;
+      }
+
       card.innerHTML = `
         <div class="relative">
           <img src="${IMG_URL + (item.poster_path || '')}" alt="${item.title || item.name}" class="w-full aspect-[2/3] object-cover">
-          ${progressPercent > 5 ? `<div class="progress-bar" style="width: ${progressPercent}%"></div>` : ''}
+          ${progressPercent > 5 ? `
+            <div class="progress-bar-container">
+              ${extraHTML}
+              <div class="progress-bar" style="width: ${progressPercent}%"></div>
+            </div>
+          ` : ''}
           <div class="heart ${isFavorite(item.id, mediaType) ? 'favorited' : ''}" 
                onclick="event.stopPropagation(); toggleFavorite(${item.id}, '${mediaType}', '${(item.title || item.name).replace(/'/g, "\\'")}', '${item.poster_path || ''}')">♥</div>
           <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
@@ -235,7 +274,6 @@
         </div>
       `;
 
-      // Click behavior: Resume if progress exists, else open modal
       card.onclick = () => {
         if (progressPercent > 5) {
           window.location.href = `player.html?type=${mediaType}&id=${item.id}&resume=1`;
@@ -247,7 +285,7 @@
       return card;
     }
 
-    // Rest of your original script (modal, favorites, load functions, search, etc.)
+    // Modal, Favorites, History, Load functions (unchanged except using new createCard)
     const modal = document.getElementById('infoModal');
     async function openModal(item, mediaType) {
       try {
@@ -266,6 +304,7 @@
         console.error('Modal error:', err);
       }
     }
+
     function closeModal() {
       modal.classList.add('hidden');
     }
@@ -295,6 +334,7 @@
       localStorage.setItem('cathq_favorites', JSON.stringify(favs));
       if (!document.getElementById('favoritesSection').classList.contains('hidden')) loadFavorites();
     }
+
     function loadFavorites() {
       const grid = document.getElementById('favoritesGrid');
       grid.innerHTML = '';
@@ -306,6 +346,7 @@
       }
       favs.forEach(f => grid.appendChild(createCard({id:f.id, title:f.title, poster_path:f.poster_path}, f.type)));
     }
+
     function loadHistory() {
       const grid = document.getElementById('historyGrid');
       grid.innerHTML = '';
@@ -324,40 +365,36 @@
       });
     }
 
-    async function loadHome() { /* your original loadHome */ 
+    async function loadHome() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       homeMoviesGrid.innerHTML = '';
       if (movies.results?.length) {
-        movies.results.slice(0,12).forEach(m => {
-          if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
-        });
+        movies.results.slice(0,12).forEach(m => homeMoviesGrid.appendChild(createCard(m, 'movie')));
       }
       const tv = await fetchTMDB('/tv/popular?page=1');
       homeTvGrid.innerHTML = '';
       if (tv.results?.length) {
-        tv.results.slice(0,12).forEach(s => {
-          if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
-        });
+        tv.results.slice(0,12).forEach(s => homeTvGrid.appendChild(createCard(s, 'tv')));
       }
     }
 
-    async function loadMovies() { /* your original */ 
+    async function loadMovies() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       moviesGrid.innerHTML = '';
-      movies.results?.slice(0,18).forEach(m => {
-        if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
-      });
+      if (movies.results?.length) {
+        movies.results.slice(0,18).forEach(m => moviesGrid.appendChild(createCard(m, 'movie')));
+      }
     }
 
-    async function loadTV() { /* your original */ 
+    async function loadTV() {
       const tv = await fetchTMDB('/tv/popular?page=1');
       tvGrid.innerHTML = '';
-      tv.results?.slice(0,18).forEach(s => {
-        if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
-      });
+      if (tv.results?.length) {
+        tv.results.slice(0,18).forEach(s => tvGrid.appendChild(createCard(s, 'tv')));
+      }
     }
 
-    // Search functions (your original - unchanged)
+    // Fixed Search (case-insensitive + better filtering)
     const searchInput = document.getElementById('searchInput');
     const searchSection = document.getElementById('searchSection');
     const searchGrid = document.getElementById('searchGrid');
@@ -369,22 +406,27 @@
     let currentMediaType = 'movie';
 
     searchInput.addEventListener('input', async (e) => {
-      const query = e.target.value.trim();
+      const query = e.target.value.trim().toLowerCase();
       if (query.length < 2) {
         searchSection.classList.add('hidden');
         showSection('home');
         return;
       }
+
       showSection('searchSection');
       searchTabs.classList.remove('hidden');
       searchGrid.innerHTML = '<p class="col-span-full text-center text-gray-400">Searching...</p>';
+
       try {
         const { results } = await fetchTMDB(`/search/multi?query=${encodeURIComponent(query)}&page=1`);
-        currentSearchResults = results.filter(r => r.media_type === 'movie' || r.media_type === 'tv').filter(r => r.poster_path);
+        currentSearchResults = results
+          .filter(r => (r.media_type === 'movie' || r.media_type === 'tv') && r.poster_path)
+          .filter(r => (r.title || r.name || '').toLowerCase().includes(query)); // case-insensitive
+
         currentPage = 1;
         renderSearchResults();
       } catch (err) {
-        searchGrid.innerHTML = '<p class="col-span-full text-center text-red-400">Error searching.</p>';
+        searchGrid.innerHTML = '<p class="col-span-full text-center text-red-400">Error searching. Try again.</p>';
       }
     });
 
@@ -392,11 +434,15 @@
       searchGrid.innerHTML = '';
       const start = (currentPage - 1) * itemsPerPage;
       const end = start + itemsPerPage;
-      const pageItems = currentSearchResults.slice(start, end).filter(item => item.media_type === currentMediaType);
+      const pageItems = currentSearchResults.slice(start, end)
+        .filter(item => item.media_type === currentMediaType);
+
       if (pageItems.length === 0) {
-        searchGrid.innerHTML = '<p class="col-span-full text-center text-gray-400">No results.</p>';
+        searchGrid.innerHTML = '<p class="col-span-full text-center text-gray-400">No results found.</p>';
       } else {
-        pageItems.forEach(item => searchGrid.appendChild(createCard(item, item.media_type)));
+        pageItems.forEach(item => {
+          searchGrid.appendChild(createCard(item, item.media_type));
+        });
       }
       renderPagination();
     }
@@ -405,11 +451,13 @@
       pagination.innerHTML = '';
       const totalPages = Math.ceil(currentSearchResults.filter(r => r.media_type === currentMediaType).length / itemsPerPage);
       if (totalPages <= 1) return;
-      // ... (your original pagination code - keep it as is)
-      const prev = document.createElement('button'); prev.textContent = '←';
+
+      const prev = document.createElement('button');
+      prev.textContent = '←';
       prev.disabled = currentPage === 1;
       prev.onclick = () => { currentPage--; renderSearchResults(); };
       pagination.appendChild(prev);
+
       for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
@@ -417,7 +465,9 @@
         btn.onclick = () => { currentPage = i; renderSearchResults(); };
         pagination.appendChild(btn);
       }
-      const next = document.createElement('button'); next.textContent = '→';
+
+      const next = document.createElement('button');
+      next.textContent = '→';
       next.disabled = currentPage === totalPages;
       next.onclick = () => { currentPage++; renderSearchResults(); };
       pagination.appendChild(next);
