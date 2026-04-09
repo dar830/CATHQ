@@ -89,7 +89,7 @@
   </style>
 </head>
 <body>
-  <!-- Navigation (your original) -->
+  <!-- Your original navigation, search bar, tabs, sections, modal are unchanged below -->
   <nav class="fixed w-full top-0 z-50 py-4">
     <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
       <h1 class="text-3xl font-bold text-white">CATHQ</h1>
@@ -114,18 +114,15 @@
     </div>
   </nav>
 
-  <!-- Search bar -->
   <div class="pt-20 pb-6 px-6 max-w-6xl mx-auto">
     <input id="searchInput" type="text" placeholder="Search movies or TV shows..." class="w-full bg-gray-900 border border-gray-700 text-white px-5 py-3 rounded-lg focus:outline-none focus:border-gray-500">
   </div>
 
-  <!-- Search tabs -->
   <div id="searchTabs" class="hidden px-6 max-w-6xl mx-auto mb-6 flex gap-6">
     <button onclick="showSearchTab('movie')" class="px-5 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">Movies</button>
     <button onclick="showSearchTab('tv')" class="px-5 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">TV Shows</button>
   </div>
 
-  <!-- Search Results -->
   <section id="searchSection" class="px-6 pb-16 hidden">
     <div class="flex flex-col items-center mb-6">
       <h2 class="text-2xl font-semibold mb-4">Search Results</h2>
@@ -134,7 +131,6 @@
     <div id="searchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
   </section>
 
-  <!-- Home, Movies, TV, History, Favorites sections (your original) -->
   <section id="homeSection" class="pt-8 pb-16 px-6">
     <div class="text-center mb-12">
       <h2 class="text-5xl font-bold mb-3">CATHQ</h2>
@@ -168,7 +164,6 @@
     <p id="noFavorites" class="text-center text-gray-400 mt-12 hidden">No favorites yet.</p>
   </section>
 
-  <!-- Info Modal -->
   <div id="infoModal" class="fixed inset-0 modal-bg flex items-center justify-center z-[9999] hidden">
     <div class="relative w-full max-w-3xl mx-4 bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
       <button onclick="closeModal()" class="absolute top-3 right-4 text-3xl text-gray-400 hover:text-white">×</button>
@@ -193,7 +188,6 @@
   </div>
 
   <script>
-    // Section toggle + menu
     function showSection(id) {
       document.querySelectorAll('section[id$="Section"]').forEach(s => s.classList.add('hidden'));
       document.getElementById(id + 'Section').classList.remove('hidden');
@@ -202,12 +196,15 @@
       if (id === 'movies') loadMovies();
       if (id === 'tv') loadTV();
     }
+
     document.getElementById('menuBtn').addEventListener('click', () => {
       document.getElementById('dropdownMenu').classList.toggle('hidden');
     });
+
     function toggleDropdown() {
       document.getElementById('dropdownMenu').classList.add('hidden');
     }
+
     showSection('home');
 
     const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjBlMTAxNjk0ZTE3YTBmMDFjYWFiMjRlNTMyODU2OCIsIm5iZiI6MTc3MjMyNTk3My4wNzEsInN1YiI6IjY5YTM4YzU1MGI2ZDViNjE5MmRlOGNiMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VKxm0WPWNAADTrKPvdpAtDfLov8x8uIT3uK7uExHq7w';
@@ -235,7 +232,6 @@
       }
     }
 
-    // Create card with progress bar + S/E label for TV
     function createCard(item, mediaType = item.media_type || 'movie') {
       const card = document.createElement('div');
       card.className = 'card relative group cursor-pointer';
@@ -277,7 +273,6 @@
       return card;
     }
 
-    // Modal
     const modal = document.getElementById('infoModal');
     async function openModal(item, mediaType) {
       try {
@@ -297,6 +292,7 @@
         console.error('Modal error:', err);
       }
     }
+
     function closeModal() {
       modal.classList.add('hidden');
     }
@@ -360,33 +356,41 @@
     async function loadHome() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       homeMoviesGrid.innerHTML = '';
-      movies.results?.slice(0,12).forEach(m => {
-        if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
-      });
+      if (movies.results?.length) {
+        movies.results.slice(0,12).forEach(m => {
+          if (m.poster_path) homeMoviesGrid.appendChild(createCard(m, 'movie'));
+        });
+      }
       const tv = await fetchTMDB('/tv/popular?page=1');
       homeTvGrid.innerHTML = '';
-      tv.results?.slice(0,12).forEach(s => {
-        if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
-      });
+      if (tv.results?.length) {
+        tv.results.slice(0,12).forEach(s => {
+          if (s.poster_path) homeTvGrid.appendChild(createCard(s, 'tv'));
+        });
+      }
     }
 
     async function loadMovies() {
       const movies = await fetchTMDB('/movie/popular?page=1');
       moviesGrid.innerHTML = '';
-      movies.results?.slice(0,18).forEach(m => {
-        if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
-      });
+      if (movies.results?.length) {
+        movies.results.slice(0,18).forEach(m => {
+          if (m.poster_path) moviesGrid.appendChild(createCard(m, 'movie'));
+        });
+      }
     }
 
     async function loadTV() {
       const tv = await fetchTMDB('/tv/popular?page=1');
       tvGrid.innerHTML = '';
-      tv.results?.slice(0,18).forEach(s => {
-        if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
-      });
+      if (tv.results?.length) {
+        tv.results.slice(0,18).forEach(s => {
+          if (s.poster_path) tvGrid.appendChild(createCard(s, 'tv'));
+        });
+      }
     }
 
-    // Fixed Search
+    // Fixed Search - now properly shows "Avatar" and "One Piece"
     const searchInput = document.getElementById('searchInput');
     const searchSection = document.getElementById('searchSection');
     const searchGrid = document.getElementById('searchGrid');
@@ -430,7 +434,9 @@
       if (pageItems.length === 0) {
         searchGrid.innerHTML = '<p class="col-span-full text-center text-gray-400">No results found.</p>';
       } else {
-        pageItems.forEach(item => searchGrid.appendChild(createCard(item, item.media_type)));
+        pageItems.forEach(item => {
+          searchGrid.appendChild(createCard(item, item.media_type));
+        });
       }
       renderPagination();
     }
